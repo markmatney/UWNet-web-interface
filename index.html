@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html>
+ <head>
+  <meta charset="UTF-8">
+  <title>Underwater Network Experiment</title>
+ </head>
+ <body>
+  <h1>Underwater Network Experiment</h1>
+  <p>Use this form to send data across our network. Set the parameters with these sliders:</p>
+  <table>
+   <tr>
+    <th>Parameter</th>
+    <th></th>
+    <th>Value</th>
+   </tr>
+<!--<tr id='infile'>
+    <td>infile</td>
+    <td><input id='infile' type='text'>browse button</td>
+   </tr>-->
+   <tr id='power'>
+    <td>power</td>
+    <td><input id='power' type='range' min='-120' max='0' step='6' value='0'></td>
+   </tr>
+   <tr id='mode'>
+    <td>mode</td>
+    <td><input id='mode' type='range' min='1' max='5' step='1' value='1'></td>
+   </tr>
+   <tr id='pkt_length'>
+    <td>pkt_length</td>
+    <td><input id='pkt_length' type='range' min='38' max='608' step='1' value='38'></td>
+   </tr>
+   <tr id='pkt_number'>
+    <td>pkt_number</td>
+    <td><input id='pkt_number' type='range' min='0' max='9999' step='1' value='0'></td>
+   </tr>
+   <tr id='cmode'>
+    <td>cmode</td>
+    <td><input type='radio' name='cmode' value='e' checked='checked'>echo<br />
+        <input type='radio' name='cmode' value='p'>printf<br />
+        <input type='radio' name='cmode' value='a'>aqecho</td>
+   </tr>
+  </table>
+
+  <input type='submit' onclick="send_data()">
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.3/jquery.min.js"></script>
+  <script src='main.js'></script>
+ </body>
+</html>

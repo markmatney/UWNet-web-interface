@@ -21,7 +21,9 @@ form = cgi.FieldStorage()
 param_power = form.getvalue('power')
 param_mode = form.getvalue('mode')
 param_pktlen = form.getvalue('pkt_length')
-param_pktnum = form.getvalue('pkt_number');
+param_pktnum = form.getvalue('pkt_number')
+
+# test comment
 
 print param_power, param_mode, param_pktlen, param_pktnum
 exit(0)

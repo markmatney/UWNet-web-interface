@@ -23,7 +23,7 @@ param_mode = form.getvalue('mode')
 param_pktlen = form.getvalue('pkt_length')
 param_pktnum = form.getvalue('pkt_number')
 
-# test comment
+# test comment random text
 
 print param_power, param_mode, param_pktlen, param_pktnum
 exit(0)

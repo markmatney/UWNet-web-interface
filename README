@@ -52,27 +52,43 @@ The database will store the parameters that users submit with the form, and the 
 	  /-----+----------+-------+
 
 id		each row has unique
+
 mpwr/lpwr/ppwr	max, min, step power
+
 mbkn/lbkn/pbkn  max, min, step blocks per packet
+
 mmod/lmod/pmod  max, min, step transmission mode
+
 testData	file or text string provided to form as input
+
+		[!] TODO: how to store file? Maybe just save to the server, and 
+		then just store its local path in the database
+
 email		email to send test results to
 
+
+
 	2. results
-+----+---------+------+
-| id | results | done |
-+----+---------+------+
++--------------+------------+---------+------+
+| experimentId | parameters | results | done |
++--------------+------------+---------+------+
 
-id		each row has unique; corresponding rows across the tables share 
-		an id
+experimentId	indicates the id of the row in the queue table that this row
+		is the result of.
+
+parameters	JSON string representing the input parameters.
+
+		{ pwr: $POWERVALUE,
+		  bkn: $BLOCKSPERPACKET,
+		  mod: $TRANSMISSIONMODE }
+
 results		JSON string representing the experimental results.
-		Contains:
-			delay - total time to transfer testData across the 
-				network
-			lossRate - a measure of loss
-			retx - ??
 
-		[!] TODO: specify this better!
+		{ delay:    $DELAYTIME,
+		  lossRate: $LOSS,
+		  retx:     $RETX }
+
+		[!] TODO: specify this better! not sure what retx is...
 
 done		TRUE if results have been sent to the email specified in the 
 		queue table, FALSE otherwise 

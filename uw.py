@@ -1,18 +1,26 @@
-import sys
-import string
-import random
-import pty
-import serial
-import subprocess
-import os.path
-from time import gmtime, strftime
+### Module overview
+### 
 
-import cgi, cgitb 
+import sys	# for getting command line arguments passed to this script
+import string	# for string functions
+import random	# for getting random characters (see subpkt)
+import pty	# for pseudo teletype
+import serial	# for serial ports
+import subprocess	# for running shell scripts
+import os.path		# for os.path.isfile 
+from time import gmtime, strftime	# for timestamping packets
+
+# used for 1. Get form data
+import cgi, cgitb	# for form processing
 from StringIO import StringIO
 import json
 from io import BytesIO
 import pycurl
 
+### 1. Get form data
+### TODO: Get from database instead: http://dev.mysql.com/doc/refman/5.5/en/index.html
+### https://docs.python.org/2/howto/webservers.html?highlight=mysql
+ 
 cgitb.enable()
 # Create instance of FieldStorage 
 form = cgi.FieldStorage() 
@@ -23,11 +31,18 @@ param_mode = form.getvalue('mode')
 param_pktlen = form.getvalue('pkt_length')
 param_pktnum = form.getvalue('pkt_number')
 
-# test comment random text
-
+# print to console? or prints to browser
 print param_power, param_mode, param_pktlen, param_pktnum
 exit(0)
 
+### 2. Packetize (adapted from SUB_PKT.SH)
+
+# Returns string representing the packet containing a
+#   timestamp,
+#   power level,
+#   transmission mode,
+#   packet length,
+#   and id number.
 def subpkt(rtc, pwr, mod, plt, psn):
   # check number of args (arity check)
   # check argument format
@@ -42,20 +57,22 @@ def subpkt(rtc, pwr, mod, plt, psn):
   data = ''.join(random.choice(string.ascii_uppercase) for i in range(plt - 38))
   return 'PTD{0}PRW{1}TMD{2}PLT{3}PSN{4}@{5}'.format(str(rtc), str(pwr).zfill(3), str(mod), str(plt).zfill(4), str(psn).zfill(4), data)
 
+
+
 print subpkt(1000000003,1,5,385,909)
 exit(0)
 
+### TODO: setup port, see http://pyserial.sourceforge.net/
 ser = serial.Serial('/dev/pts/0')
 #ser = serial.Serial('~/pty_laptop', 38400)
 #print ser.name
 #ser.write("hello world")
 
+### 3. FORM CHECKING
+### TODO: ^. May want to do this in javascript?
 
-#################
-# FORM CHECKING #
-#################
-
-
+### 4. Port of RUN_CHINFO.SH to Python
+### TODO: fill in blanks
 
 #port name
 #pt = '/dev/ttyUSB1'

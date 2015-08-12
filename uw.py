@@ -62,21 +62,9 @@ def subpkt(rtc, pwr, mod, plt, psn):
 print subpkt(1000000003,1,5,385,909)
 exit(0)
 
-### TODO: setup port, see http://pyserial.sourceforge.net/
-ser = serial.Serial('/dev/pts/0')
-#ser = serial.Serial('~/pty_laptop', 38400)
-#print ser.name
-#ser.write("hello world")
-
-### 3. FORM CHECKING
-### TODO: ^. May want to do this in javascript?
-
-### 4. Port of RUN_CHINFO.SH to Python
-### TODO: fill in blanks
-
 #port name
-#pt = '/dev/ttyUSB1'
-pt = '/dev/pts/23'
+pt = '/dev/ttyUSB1'
+#pt = '/dev/pts/23'
 
 #baud rate
 bd = 38400
@@ -102,9 +90,27 @@ mmod = 4
 lmod = 1
 pmod = 1
 
+### TODO: setup port, see http://pyserial.sourceforge.net/
+ser = serial.Serial(0) #what is the pace of reading data
+ser.baud = bd
+ser.port = pt
+#ser = serial.Serial('~/pty_laptop', 38400)
+#print ser.name
+#ser.write("hello world")
+
+### 3. FORM CHECKING
+### TODO: ^. May want to do this in javascript?
+
+### 4. Port of RUN_CHINFO.SH to Python
+### TODO: fill in blanks
+
 #configure the serial port by running:
 script_to_config = "kermit CFG_OFDM_38400.KSC"
 #TODO: run kermit ^^
+p_kermit_0 = subprocess.call(["kermit", "CFG_AQUASENT_KERMIT_38400" ,"-c"])#script interacts with kermit
+p_kermit_1 = p_kermit_0 = subprocess.call(["kermit", "CFG_AQUASENT_KERMIT_38400_USB1" ,"-c"])
+#need to figure out how to make sure I can send 'c' command to kermit to make sure it is online
+#need
 
 #check if ./sub_PKT exists
 if not os.path.isfile('./SUB_PKT.SH'):
@@ -135,6 +141,7 @@ elif cmode == "p":
   # printf "\$HHCRW,TXPWR,-6\r\n" >> $PT
   # sleep 1
   # printf "\$HHTXA,0,0,0,STARTEXPERIMENT$RTC\r\n" >> $PT
+#this is not for us for we don't have access to this mode. 
 elif cmode == "a":
   print 'a'
   # call shell script: aqecho

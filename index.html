@@ -7,16 +7,18 @@
  <body>
   <h1>Underwater Network Experiment</h1>
   <p>Use this form to send data across our network. Set the parameters with these sliders:</p>
+  <form method='post' action='submit.php'>
   <table>
    <tr>
     <th>Parameter</th>
-    <th></th>
+<!--    <th></th>-->
     <th>Value</th>
    </tr>
 <!--<tr id='infile'>
     <td>infile</td>
     <td><input id='infile' type='text'>browse button</td>
    </tr>-->
+<!--
    <tr id='power'>
     <td>power</td>
     <td><input id='power' type='range' min='-120' max='0' step='6' value='0'></td>
@@ -38,10 +40,59 @@
     <td><input type='radio' name='cmode' value='e' checked='checked'>echo<br />
         <input type='radio' name='cmode' value='p'>printf<br />
         <input type='radio' name='cmode' value='a'>aqecho</td>
+   </tr>-->
+
+   <tr>
+    <td>max power</td>
+    <td><input name='mpwr' type='text'></td>
    </tr>
+   <tr>
+    <td>min power</td>
+    <td><input name='lpwr' type='text'></td>
+   </tr>
+   <tr>
+    <td>step power</td>
+    <td><input name='ppwr' type='text'></td>
+   </tr>
+   <tr>
+    <td>max mode</td>
+    <td><input name='mmod' type='text'></td>
+   </tr>
+   <tr>
+    <td>min mode</td>
+    <td><input name='lmod' type='text'></td>
+   </tr>
+   <tr>
+    <td>step mode</td>
+    <td><input name='pmod' type='text'></td>
+   </tr>
+   <tr>
+    <td>max blocks/packet</td>
+    <td><input name='mbkn' type='text'></td>
+   </tr>
+   <tr>
+    <td>min blocks/packet</td>
+    <td><input name='lbkn' type='text'></td>
+   </tr>
+   <tr>
+    <td>step blocks/packet</td>
+    <td><input name='pbkn' type='text'></td>
+   </tr>
+   <tr>
+    <td>testData</td>
+    <td><input name='testData' type='text'></td>
+   </tr>
+   <tr>
+    <td>email</td>
+    <td><input name='email' type='text'></td>
+   </tr>
+
   </table>
 
-  <input type='submit' onclick="send_data()">
+
+  <input type='submit' value='submit'>
+  </form>
+
   <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.3/jquery.min.js"></script>
   <script src='main.js'></script>
  </body>

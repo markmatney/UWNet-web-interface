@@ -1,6 +1,9 @@
 // write the current slider value for each table row
 // get second tr (start here)
-var params = ['power', 'mode', 'pkt_length', 'pkt_number'], i, value;
+
+
+var params = ['mpwr', 'lpwr', 'ppwr', 'mmod', 'lmod', 'pmod', 'mbkn', 'lbkn', 'pbkn', 'testData'], i, value;
+//var params = ['power', 'mode', 'pkt_length', 'pkt_number'], i, value;
 var collect_values = function(p) {
   var ret = {}, i;
   for (i = 0; i < p.length; i++) {
@@ -10,11 +13,13 @@ var collect_values = function(p) {
 //   return JSON.stringify(ret);
 };
 
+/*
 for (i = 0; i < params.length; i++)
 {
   value = $('input#' + params[i]).val();
   $('tr#' + params[i]).append('<td id="' + params[i] + '">' + value + '</td>');
 }
+*/
 
 $('input[type="range"]').on('change', function(e) {
   var id = $(this).attr('id'),
@@ -61,14 +66,15 @@ $('input[type="range"]').on('change', function(e) {
     }
   }
 });
-
+/*
 var send_data = function() {
   console.log(collect_values(params));
   $.ajax({
     method: 'POST',
-    url: 'write.php',
+    url: 'submit.py',
     data: collect_values(params)
   }).done(function() {
     alert(JSON.stringify(collect_values(params)));
   });
 };
+*/

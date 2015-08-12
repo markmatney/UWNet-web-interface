@@ -48,7 +48,7 @@ The database will store the parameters that users submit with the form, and the 
 +----+------+------+------+------+------+------+------+------+------+-----/
 
 	  /-----+----------+-------+
-	    ... | testdata | email |
+	    ... | testData | email |
 	  /-----+----------+-------+
 
 id		each row has unique
@@ -72,7 +72,7 @@ email		email to send test results to
 +--------------+------------+---------+------+
 | experimentId | parameters | results | done |
 +--------------+------------+---------+------+
-
+xperimentID 
 experimentId	indicates the id of the row in the queue table that this row
 		is the result of.
 
@@ -88,9 +88,20 @@ results		JSON string representing the experimental results.
 		  lossRate: $LOSS,
 		  retx:     $RETX }
 
-		[!] TODO: specify this better! not sure what retx is...
+		bit loss rate (can be derived from block loss rate)
+		retx == retransmissions
 
 done		TRUE if results have been sent to the email specified in the 
 		queue table, FALSE otherwise 
 
 
+
+TODO: anechoic chamber
+	acoustic barrier mat
+
+	hook up the thinkpad to the modems either friday or saturday
+	upload file to dropbox or google using API, share it to email addr
+
+	AWS (amazon web serv)
+
+white macbook and thinkpad + power supply, bring it down and plug into both modems and a network connection

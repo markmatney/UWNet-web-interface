@@ -2,6 +2,9 @@
 ### 
 
 import sys	# for getting command line arguments passed to this script
+sys.path.append('/usr/lib/python2.7/dist-packages')
+print sys.path
+
 import string	# for string functions
 import random	# for getting random characters (see subpkt)
 import pty	# for pseudo teletype
@@ -17,22 +20,20 @@ import json
 from io import BytesIO
 import pycurl
 
-### 1. Get form data
-### TODO: Get from database instead: http://dev.mysql.com/doc/refman/5.5/en/index.html
+### 1. Query database: http://dev.mysql.com/doc/refman/5.5/en/index.html
 ### https://docs.python.org/2/howto/webservers.html?highlight=mysql
- 
-cgitb.enable()
-# Create instance of FieldStorage 
-form = cgi.FieldStorage() 
 
-# Get data from fields
-param_power = form.getvalue('power')
-param_mode = form.getvalue('mode')
-param_pktlen = form.getvalue('pkt_length')
-param_pktnum = form.getvalue('pkt_number')
+import mysql.connector
+cnx = mysql.connector.connect(user='mark', password='pass', host='localhost', database='UWNet')
+cursor = cnx.cursor()
+query = ("SELECT * FROM InputQueue WHERE email = 'markamatney@gmail.com'")
+cursor.execute(query)
+for (id) in cursor:
+  #run the experiments!!!
+  print("{}".format(id))
 
-# print to console? or prints to browser
-print param_power, param_mode, param_pktlen, param_pktnum
+cursor.close()
+cnx.close()
 exit(0)
 
 ### 2. Packetize (adapted from SUB_PKT.SH)

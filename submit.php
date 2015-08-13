@@ -15,6 +15,7 @@ if (
 {
 
   // create new associative array containing numeric vals
+  // (<string> plus <int> is <int>, thanks PHP!)
   $nums = array(
     'mpwr' => $_POST['mpwr'] + 0,
     'lpwr' => $_POST['lpwr'] + 0,
@@ -57,72 +58,80 @@ if (
          )
       {
 
-        // TODO: sanitize testData and email
+        // sanitize email
+        // TODO: sanitize testData
+
+        // TODO: Read on 'SQL injection'
+
         $sanitized_testData = $_POST['testData'];
         $sanitized_email = filter_var($_POST['email'], FILTER_SANITIZE_EMAIL);
-        if (!filter_var($sanitized_email, FILTER_VALIDATE_EMAIL))
-        {
-          echo '<p>problem with email!</p>';
-          // TODO: kill
-        }
 
-        // construct query
-        $query = 
-         "INSERT INTO InputQueue
-          (
+        if (filter_var($sanitized_email, FILTER_VALIDATE_EMAIL))
+        {
+          // construct query
+          $query = 
+           "INSERT INTO InputQueue
+            (
 		mpwr,	lpwr,	ppwr,
 		mbkn,	lbkn,	pbkn,
 		mmod,	lmod,	pmod,
 		testData,
 		email
-          )
-          VALUES
-          (
+            )
+            VALUES
+            (
 		{$nums['mpwr']},	{$nums['lpwr']},	{$nums['ppwr']},
 		{$nums['mbkn']},	{$nums['lbkn']},	{$nums['pbkn']},
 		{$nums['mmod']},	{$nums['lmod']},	{$nums['pmod']},
 		'$sanitized_testData',
 		'$sanitized_email'
-          )";
+            )";
 
-        // connect to DB and execute query
-        $mysql_handle = mysql_connect('localhost', 'mark', 'pass')
-          or die('Unable to connect');
-        $db_handle = mysql_select_db('UWNet', $mysql_handle)
-          or die('Unable to select the database');
-        $result = mysql_query($query);
-        mysql_close($mysql_handle);
+          // connect to DB and execute query
+          // TODO: give better die warnings; maybe do internal error warning
 
-        // TODO: do error checking
+          $mysql_handle = mysql_connect('localhost', 'mark', 'pass')
+            or die('Unable to connect');
+          $db_handle = mysql_select_db('UWNet', $mysql_handle)
+            or die('Unable to select the database');
+          $result = mysql_query($query);
+          mysql_close($mysql_handle);
 
-        if ($result)
-        {
-          echo '<p>Data was inserted correctly!<p>';
-          echo '<p>Results will be sent to the following email address:</p>';
-          echo "<p>$sanitized_email</p>";
-          echo '<p>If this is incorrect, please contact us at [admin uwnet]@cs.ucla.edu</p>';
+          if ($result) // mysql insert succeeds!
+          {
+            echo '<p>Data was inserted correctly!<p>';
+            echo '<p>Results will be sent to the following email address:</p>';
+            echo "<p>$sanitized_email</p>";
+            echo '<p>If this is incorrect, please contact us at [admin uwnet]@cs.ucla.edu</p>';
+            // TODO: Specify contact email in line above
+          }
+          else // mysql insert failed
+          {
+            // TODO: HTTP internal error warning!
+            echo '<p>ERROR! Internal error</p>';
+          }
         }
-        else
+        else // email and test data illegitimate
         {
-          echo '<p>ERROR!</p>';
+          echo '<p>Please provide test data comprised only of </p>';
         }
       }
-      else
+      else // Step size does not equally divide interval
       {
         echo '<p>Ensure that (max - min) mod step == 0</p>';
       }
     }
-    else
+    else // One of the integer parameters has max > min
     {
       echo '<p>Ensure that for all numerical parameters, max &gt; min</p>';
     }
   }
-  else
+  else // Some numeric parameters were not integers
   {
     echo '<p>Ensure that all numerical parameters are integers</p>';
   }
 }
-else
+else // expected numeric parameters, weren't
 {
   echo '<p>Ensure that the parameters are numerical</p>';
 }

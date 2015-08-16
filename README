@@ -30,7 +30,6 @@ power	blk/pkt	mode
 0	8	5
 -6	8	5
 -12	8	5
-...
 
 There are 3*2*3 = 18 combinations of these parameters
 
@@ -39,6 +38,8 @@ II. Test script
 The test script is a Python file that is adopted from the RUN_CHINFO.SH and SUB_PKT.SH shell scripts. It will receive the queued experiments (rows in the database, from the queue table) from the database when notified that the test apparatus is online, run the test script on the fields of each row, and store results in the database (in the results table). Also will email the results to the user who submitted the test parameters.
 
 III. Database
+
+[!] TODO: May want to store the numerical parameters in JSON
 
 The database will store the parameters that users submit with the form, and the results of the tests. There are two tables. The queue table will store each form submission. The results table will store the output of the script; whatever results from the experiment need to be measured/analyzed (not yet specified).
 
@@ -72,7 +73,7 @@ email		email to send test results to
 +--------------+------------+---------+------+
 | experimentId | parameters | results | done |
 +--------------+------------+---------+------+
-xperimentID 
+
 experimentId	indicates the id of the row in the queue table that this row
 		is the result of.
 
@@ -95,13 +96,3 @@ done		TRUE if results have been sent to the email specified in the
 		queue table, FALSE otherwise 
 
 
-
-TODO: anechoic chamber
-	acoustic barrier mat
-
-	hook up the thinkpad to the modems either friday or saturday
-	upload file to dropbox or google using API, share it to email addr
-
-	AWS (amazon web serv)
-
-white macbook and thinkpad + power supply, bring it down and plug into both modems and a network connection

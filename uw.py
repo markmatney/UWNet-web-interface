@@ -108,8 +108,8 @@ ser.port = pt
 #configure the serial port by running:
 script_to_config = "kermit CFG_OFDM_38400.KSC"
 #TODO: run kermit ^^
-p_kermit_0 = subprocess.call(["kermit", "CFG_AQUASENT_KERMIT_38400" ,"-c"])#script interacts with kermit
-p_kermit_1 = p_kermit_0 = subprocess.call(["kermit", "CFG_AQUASENT_KERMIT_38400_USB1" ,"-c"])
+p_kermit_0 = subprocess.call(["kermit", "CFG_AQUASENT_KERMIT_38400" ,"-c", "-C", "+++A, $HHCRW, $TXPWR,10"])#script interacts with kermit
+p_kermit_1 = p_kermit_0 = subprocess.call(["kermit", "CFG_AQUASENT_KERMIT_38400_USB1" ,"-c", "-C", "+++A, $HHCRW, $TXPWR,10"])
 #need to figure out how to make sure I can send 'c' command to kermit to make sure it is online
 #need
 

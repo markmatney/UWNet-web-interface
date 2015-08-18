@@ -1,43 +1,128 @@
-### Module overview
-### 
+'''
+STEPS:
 
-import sys	# for getting command line arguments passed to this script
+0. Configure the port on our machine using kermit
+1. Query database for experiments that are ready to run
+2. Set up experiment logfile
+3. Run the experiment on each combination of { pwr, bkn, mod }
+4. Handle results (send to database: insert, update, etc.)
+
+'''
+
+import sys, string, random, subprocess #, pty, serial
+from time import gmtime, strftime, clock	# for timestamping packets
+
 sys.path.append('/usr/lib/python2.7/dist-packages')
-print sys.path
 
-import string	# for string functions
-import random	# for getting random characters (see subpkt)
-import pty	# for pseudo teletype
-import serial	# for serial ports
-import subprocess	# for running shell scripts
-import os.path		# for os.path.isfile 
-from time import gmtime, strftime	# for timestamping packets
+################################################################################
+### 0. Configure the port on our machine using kermit
+################################################################################
 
-# used for 1. Get form data
-import cgi, cgitb	# for form processing
-from StringIO import StringIO
-import json
-from io import BytesIO
-import pycurl
+p_kermit_0 = subprocess.call(["kermit", "CFG_AQUASENT_KERMIT_38400" ,"-c", "-C", "+++A, $HHCRW, $TXPWR,10"])#script interacts with kermit
 
+# TODO: why set p_kermit_1 = p_kermit_0 ?
+p_kermit_1 = p_kermit_0 = subprocess.call(["kermit", "CFG_AQUASENT_KERMIT_38400_USB1" ,"-c", "-C", "+++A, $HHCRW, $TXPWR,10"])
+# TODO: need to figure out how to make sure I can send 'c' command to kermit to make sure it is online
+
+################################################################################
 ### 1. Query database: http://dev.mysql.com/doc/refman/5.5/en/index.html
-### https://docs.python.org/2/howto/webservers.html?highlight=mysql
+################################################################################
 
+# https://docs.python.org/2/howto/webservers.html?highlight=mysql
+# http://dev.mysql.com/doc/connector-python/en/connector-python-example-cursor-select.html
 import mysql.connector
 cnx = mysql.connector.connect(user='mark', password='pass', host='localhost', database='UWNet')
 cursor = cnx.cursor()
-query = ("SELECT * FROM InputQueue WHERE email = 'markamatney@gmail.com'")
+
+# may not need email
+
+# selects those rows in the InputQueue table with experiments that have not yet been run
+query = ("SELECT id, mpwr, lpwr, ppwr, mbkn, lbkn, pbkn, mmod, lmod, pmod, testData FROM InputQueue WHERE exitStatus IS NULL")
 cursor.execute(query)
-for (id) in cursor:
-  #run the experiments!!!
-  print("{}".format(id))
+
+# at the end of the for loop, go thru this list and insert elements into the results table
+resultsList = []
+
+#time interval between packets
+spl = 10
+
+################################################################################
+### 2. Set up experiment logfile
+################################################################################
+
+# TODO: may want to remove logging when debugging is complete, or allow it to be toggled
+rptt = 5 # number of times to repeat experiment
+psn = 1 # delay (sleep time), may not need to use
+
+rtc = strftime("%y%m%d%H%M", gmtime())
+logn = 'T{0}.LOG'.format(rtc)
+print 'Start test: {0}'.format(rtc)
+
+################################################################################
+### 3. Run the experiment on each combination of { pwr, bkn, mod }
+################################################################################
+
+# record results in variable (resultsList)
+
+for (id, mpwr, lpwr, ppwr, mbkn, lbkn, pbkn, mmod, lmod, pmod, testData) in cursor:
+  # handle each enqueued experiment
+  # report errors, store in database
+  # code NULL: exited normally
+  # code NOT NULL: error
+  #  - KE: kermit configuration
+  #  - DB: database access
+  #  - PT: port configuration
+  #  - etc...
+
+  for transmission_mode in range(lmod, mmod + 1, pmod):
+    print '### Sending in Mode {0}'.format(transmission_mode)
+    for blocks_per_packet in range(lbkn, mbkn + 1, pbkn):
+      print '### Sending {0} blocks'.format(blocks_per_packet)
+      # check if block number is in [1,16]
+  
+  
+      # COMPOUND IF STATEMENT HERE, checks packet length
+  
+      for transmission_power in range(lpwr, mpwr + 1, ppwr):
+        # change transmit level
+        print '### TXPRW changed to {0}\n'.format(transmission_power)
+
+        for trial in range(rptt): # repeat the experiment!
+          # Packetize testData
+  
+          print 'sending data now'
+
+          start_time = clock() 
+
+          #####################################################
+          # TODO: transmit data here
+          # keep track of loss, number of retransmissions, etc.
+          #####################################################
+
+          execution_time = clock() - start_time
+ 
+          print "Elapsed time: {} seconds".format(execution_time)
+        print
+  
+ 
+  # sleep for spl seconds, maybe in order for it to work?
+
+################################################################################
+### 4. Handle results
+################################################################################
+
+# TODO: insert results into the results table
+# TODO: record exit status, which will determine if we need to rerun the experiments, require manual intervention, or are ready to be emailed to client
 
 cursor.close()
 cnx.close()
 exit(0)
 
-### 2. Packetize (adapted from SUB_PKT.SH)
+################################################################################
+### Auxiliary functions
+################################################################################
 
+### Packetize (adapted from SUB_PKT.SH)
 # Returns string representing the packet containing a
 #   timestamp,
 #   power level,
@@ -58,124 +143,5 @@ def subpkt(rtc, pwr, mod, plt, psn):
   data = ''.join(random.choice(string.ascii_uppercase) for i in range(plt - 38))
   return 'PTD{0}PRW{1}TMD{2}PLT{3}PSN{4}@{5}'.format(str(rtc), str(pwr).zfill(3), str(mod), str(plt).zfill(4), str(psn).zfill(4), data)
 
+#print subpkt(1000000003,1,5,385,909)
 
-
-print subpkt(1000000003,1,5,385,909)
-exit(0)
-
-#port name
-pt = '/dev/ttyUSB1'
-#pt = '/dev/pts/23'
-
-#baud rate
-bd = 38400
-
-#time interval between packets
-spl = 10
-
-#cmode - get from radio button
-cmode = "e"
-
-#transmission power
-mpwr = 0
-lpwr = -120
-ppwr = 6
-
-#blocks per packet
-mbkn = 8
-lbkn = 1
-pbkn = 7
-
-#transmit mode
-mmod = 4
-lmod = 1
-pmod = 1
-
-### TODO: setup port, see http://pyserial.sourceforge.net/
-ser = serial.Serial(0) #what is the pace of reading data
-ser.baud = bd
-ser.port = pt
-#ser = serial.Serial('~/pty_laptop', 38400)
-#print ser.name
-#ser.write("hello world")
-
-### 3. FORM CHECKING
-### TODO: ^. May want to do this in javascript?
-
-### 4. Port of RUN_CHINFO.SH to Python
-### TODO: fill in blanks
-
-#configure the serial port by running:
-script_to_config = "kermit CFG_OFDM_38400.KSC"
-#TODO: run kermit ^^
-p_kermit_0 = subprocess.call(["kermit", "CFG_AQUASENT_KERMIT_38400" ,"-c", "-C", "+++A, $HHCRW, $TXPWR,10"])#script interacts with kermit
-p_kermit_1 = p_kermit_0 = subprocess.call(["kermit", "CFG_AQUASENT_KERMIT_38400_USB1" ,"-c", "-C", "+++A, $HHCRW, $TXPWR,10"])
-#need to figure out how to make sure I can send 'c' command to kermit to make sure it is online
-#need
-
-#check if ./sub_PKT exists
-if not os.path.isfile('./SUB_PKT.SH'):
-  print 'ERROR: Need file SUB_PKT.SH'
-  exit(0)
-
-# if number of arguments is not equal to 1, print usage and exit
-if len(sys.argv) != 1:
-  print 'ERROR: Must pass exactly one argument to RUN_CHINFO.SH' 
-  exit(0)
-
-rptt = 5 # first command line arg, number of times to repeat (repeat time)
-psn = 1
-mod = lmod
-rtc = strftime("%y%m%d%H%M", gmtime())
-logn = 'T{0}.LOG'.format(rtc)
-print 'Start test: {0}'.format(rtc)
-# write whatever is written to the port, to the file given by logn
-# spid = get process id
-if cmode == "e":
-  # echo "\$HHCRW,TXPWR,-6" >> $PT
-  print ''
-  # sleep 1
-  # echo "\$HHTXA,0,0,0,STARTEXPERIMENT$RTC" >> $PT
-elif cmode == "p":
-  print 'p'
-  # print to console
-  # printf "\$HHCRW,TXPWR,-6\r\n" >> $PT
-  # sleep 1
-  # printf "\$HHTXA,0,0,0,STARTEXPERIMENT$RTC\r\n" >> $PT
-#this is not for us for we don't have access to this mode. 
-elif cmode == "a":
-  print 'a'
-  # call shell script: aqecho
-  # aqecho $PT $BD \$HHCRW,TXPWR,-6
-  # sleep 1
-  # aqecho $PT $BD \$HHTXA,0,0,0,STARTEXPERIMENT$RTC
-else:
-  print "ERROR: CMODE should be e/p/a"
-  exit(0)
-
-# sleep for spl seconds
-
-#TODO: use mmod + 1, mbkn + 1, lpwr - 1, etc
-
-for i in range(lmod, mmod, pmod):
-  print 'Sending in Mode {0}'.format(i)
-  for j in range(lbkn, mbkn, pbkn):
-    # is this correct? 
-    print 'Sending {0} blocks'.format(j)
-    # check if block number is in [1,16]
-
-
-    # COMPOUND IF STATEMENT HERE, checks packet length
-
-    for k in range(mpwr, lpwr, -ppwr):
-      # change transmit level
-      # if cmode = e/p/a, call echo, printf, or aqecho
-
-      print 'TXPRW changed to {0}'.format(k)
-
-      # repeatedly send out packets
-      # if 
-
-print 'End: {0}'.format(rtc)
-# kill a process
-print "Finished"

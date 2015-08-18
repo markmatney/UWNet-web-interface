@@ -14,13 +14,21 @@ CREATE TABLE InputQueue(
 	pmod INT NOT NULL,
 	testData VARCHAR(1024),
 	email VARCHAR(128),
+	exitStatus INT DEFAULT NULL,
+	emailSent BOOL DEFAULT FALSE,
 	PRIMARY KEY(id)
 );
 
 CREATE TABLE Results(
 	experimentID INT NOT NULL,
+
+	-- TODO:
+	--	1) possibly replace 'parameters' with 3 columns:
+	--		- 'pwr', 'bkn', 'mod'
+	-- 	2) possibly replace 'results':
+	--		- maybe have datetime columns for start time, end time
+
 	parameters VARCHAR(128),
 	results VARCHAR(128),
-	done BOOL,
 	FOREIGN KEY(experimentID) REFERENCES InputQueue(id)
 );

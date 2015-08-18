@@ -21,7 +21,7 @@ sys.path.append('/usr/lib/python2.7/dist-packages')
 p_kermit_0 = subprocess.call(["kermit", "CFG_AQUASENT_KERMIT_38400" ,"-c", "-C", "+++A, $HHCRW, $TXPWR,10"])#script interacts with kermit
 
 # TODO: why set p_kermit_1 = p_kermit_0 ?
-p_kermit_1 = p_kermit_0 = subprocess.call(["kermit", "CFG_AQUASENT_KERMIT_38400_USB1" ,"-c", "-C", "+++A, $HHCRW, $TXPWR,10"])
+p_kermit_1 = subprocess.call(["kermit", "CFG_AQUASENT_KERMIT_38400_USB1" ,"-c", "-C", "+++A, $HHCRW, $TXPWR,10"])
 # TODO: need to figure out how to make sure I can send 'c' command to kermit to make sure it is online
 
 ################################################################################

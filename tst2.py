@@ -8,11 +8,11 @@ This is a temporary script file.
 import subprocess
 import serial
 
-kermit_port_1 = serial.Serial(port='/dev/ttyUSB0', baudrate=38400, parity=PARITY_NONE, stopbits=STOPBITS_ONE, timeout=None)
+kermit_port_1 = serial.Serial(port='/dev/ttyUSB0', baudrate=38400)
 
-kermit_port_2 = serial.Serial(port='/dev/ttyUSB1', baudrate=38400, parity=PARITY_NONE, stopbits=STOPBITS_ONE, timeout=None)
+kermit_port_2 = serial.Serial(port='/dev/ttyUSB1', baudrate=38400)
 
-commands = ["+++A", "$HHCRW, TXPWR, 100"]
+commands = ["+++A\r\n","$HHTXA,0,0,0,HELLO WORLD\r\n"]
 
 for i in commands:
     kermit_port_1.write(i)
@@ -20,5 +20,4 @@ for i in commands:
 
 kermit_port_1.close()
 kermit_port_2.close()
-
 

@@ -9,7 +9,7 @@ STEPS:
 
 '''
 
-import sys, string, random, subprocess #, pty, serial
+import sys, string, random, subprocess, serial #, pty
 from time import gmtime, strftime, clock	# for timestamping packets
 
 sys.path.append('/usr/lib/python2.7/dist-packages')
@@ -18,11 +18,16 @@ sys.path.append('/usr/lib/python2.7/dist-packages')
 ### 0. Configure the port on our machine using kermit
 ################################################################################
 
-p_kermit_0 = subprocess.call(["kermit", "CFG_AQUASENT_KERMIT_38400" ,"-c", "-C", "+++A, $HHCRW, $TXPWR,10"])#script interacts with kermit
+port_0 = serial.Serial(port='/dev/ttyUSB0', baudrate=38400)
+#p_kermit_0 = subprocess.call(["kermit", "../CFG_AQUASENT_KERMIT_38400" ,"-c", "-C", "+++A, $HHCRW,TXPWR,10"])#script interacts with kermit
+p_kermit_0 = subprocess.call(["kermit", "../CFG_AQUASENT_KERMIT_38400"])
 
 # TODO: why set p_kermit_1 = p_kermit_0 ?
-p_kermit_1 = subprocess.call(["kermit", "CFG_AQUASENT_KERMIT_38400_USB1" ,"-c", "-C", "+++A, $HHCRW, $TXPWR,10"])
+p_kermit_1 = subprocess.call(["kermit", "../CFG_AQUASENT_KERMIT_38400_USB1"])
 # TODO: need to figure out how to make sure I can send 'c' command to kermit to make sure it is online
+
+port_0.write('hi')
+
 
 ################################################################################
 ### 1. Query database: http://dev.mysql.com/doc/refman/5.5/en/index.html

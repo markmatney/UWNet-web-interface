@@ -9,10 +9,9 @@ STEPS:
 
 '''
 
-import sys, string, random, subprocess, serial #, pty
+import math, sys, string, random, subprocess, serial #, pty
 from time import gmtime, strftime, clock	# for timestamping packets
 import hashlib #for checksum purposes
-
 
 sys.path.append('/usr/lib/python2.7/dist-packages')
 
@@ -20,9 +19,11 @@ sys.path.append('/usr/lib/python2.7/dist-packages')
 ### 0. Configure the port on our machine using kermit
 ################################################################################
 
-kermit_port_1 = serial.Serial(port='/dev/ttyUSB0', baudrate=38400)
+port_ttyUSB0 = serial.Serial(port='/dev/ttyUSB0', baudrate=38400)
+port_ttyUSB1 = serial.Serial(port='/dev/ttyUSB1', baudrate=38400)
 
-kermit_port_2 = serial.Serial(port='/dev/ttyUSB1', baudrate=38400)
+port_ttyUSB0.write("+++A")
+port_ttyUSB1.write("+++A")
 
 ################################################################################
 ### 1. Query database: http://dev.mysql.com/doc/refman/5.5/en/index.html
@@ -75,65 +76,71 @@ for (id, mpwr, lpwr, ppwr, mbkn, lbkn, pbkn, mmod, lmod, pmod, testData) in curs
   #  - etc...
 
   for transmission_mode in range(lmod, mmod + 1, pmod):
+
     print '### Sending in Mode {0}'.format(transmission_mode)
+
     for blocks_per_packet in range(lbkn, mbkn + 1, pbkn):
+ 
       print '### Sending {0} blocks'.format(blocks_per_packet)
-      # check if block number is in [1,16]
-  
-  
-      # COMPOUND IF STATEMENT HERE, checks packet length
+
+      if transmission_mode == 1:
+          packet_length = blocks_per_packet * 38
+      elif transmission_mode == 2:
+          packet_length = blocks_per_packet * 80
+      elif transmission_mode == 3:
+          packet_length = blocks_per_packet * 122
+      elif transmission_mode == 4:
+          packet_length = blocks_per_packet * 164
+      elif transmission_mode == 5:
+          packet_length = blocks_per_packet * 248
+      else :
+          print("ERROR:Transmit mode ranges from 1 to 5")
+          exit(0)
+
+      data_size = testData.length()
+      n_packets = int(math.ceil(float(data_size)/packet_length))
   
       for transmission_power in range(lpwr, mpwr + 1, ppwr):
-        # change transmit level
+
         print '### TXPRW changed to {0}\n'.format(transmission_power)
+        port_ttyUSB0.write("$HHCRW,TXPWR,{0}\r\n".format(transmission_power))
 
         for trial in range(rptt): # repeat the experiment!
-          # Packetize testData
-  
+
           print 'sending data now'
 
+          # keep track of packet loss
+          n_loss = 0
           start_time = clock() 
 
           #####################################################
           # TODO: transmit data here
           
-          kermit_port_1.write("$HHTXA,0,0,0,{0}\n".format(testData))
-          kermit_port_2.write("$HHTXA,0,0,0,{0}\n".format(testData))
-          
-          #calculate package size in bytes
-          testData_size = testData.length()
-          #transmits data in blocks of that size.
-            if transmission_mode == 1:
-                packet_length = blocks_per_packet * 38
-            if transmission_mode == 2:
-                packet_length = blocks_per_packet * 80
-            if transmission_mode == 3:
-                packet_length = blocks_per_packet * 122
-            if transmission_mode == 4:
-                packet_length = blocks_per_packet * 164
-            if transmission_mode == 5:
-                packet_length = blocks_per_packet * 248
-            else :
-                print("ERROR:Transmit mode ranges from 1 to 5")
-                exit(0)
-          # keep track of loss, number of retransmissions, etc.
-          #doing the checksum
+          # send each packet
+          for i in range(n_packets):
+            if i == n_packets - 1:
+              packet_to_send = testData[i*packet_length:]
+            else:
+              packet_to_send = testData[i*packet_length:(i+1)*packet_length]
 
-            for i in range(testData.length/packet_length):
-                   
-    
-          
-          
-          
+            # TODO: implement checksum
+            port_ttyUSB0.write("$HHTXA,0,0,0,{0}\r\n".format(packet_to_send))
+            read_buffer = port_ttyUSB1.readline();
+
+            if read_buffer != packet_to_send:
+              n_loss += 1
+
+
+          # TODO: keep track of loss, number of retransmissions, etc.
+
           #####################################################
 
           execution_time = clock() - start_time
+
+          # TODO: store the results of the above experiment in some variable for later use
  
           print "Elapsed time: {} seconds".format(execution_time)
-        print
-  
- 
-  # sleep for spl seconds, maybe in order for it to work?
+        print # empty line
 
 ################################################################################
 ### 4. Handle results

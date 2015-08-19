@@ -117,6 +117,14 @@ for (id, mpwr, lpwr, ppwr, mbkn, lbkn, pbkn, mmod, lmod, pmod, testData) in curs
                 print("ERROR:Transmit mode ranges from 1 to 5")
                 exit(0)
           # keep track of loss, number of retransmissions, etc.
+          #doing the checksum
+
+            for i in range(testData.length/packet_length):
+                   
+    
+          
+          
+          
           #####################################################
 
           execution_time = clock() - start_time

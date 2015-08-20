@@ -28,7 +28,7 @@ CREATE TABLE Results(
 	-- 	2) possibly replace 'results':
 	--		- maybe have datetime columns for start time, end time
 
-	parameters VARCHAR(128),
-	results VARCHAR(128),
+	parameters VARCHAR(2048),
+	results VARCHAR(2048),
 	FOREIGN KEY(experimentID) REFERENCES InputQueue(id)
 );

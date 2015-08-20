@@ -58,13 +58,19 @@ if (
          )
       {
 
-        // sanitize email
+        // connect to DB and execute query
+        // TODO: give better die warnings; maybe do internal error warning
+        $mysql_handle = mysql_connect('localhost', 'mark', 'pass')
+          or die('Unable to connect');
+        $db_handle = mysql_select_db('UWNet', $mysql_handle)
+          or die('Unable to select the database');
+
         // TODO: sanitize testData
-
         // TODO: Read on 'SQL injection'
-
         $sanitized_testData = $_POST['testData'];
         $sanitized_email = filter_var($_POST['email'], FILTER_SANITIZE_EMAIL);
+
+        echo "<p>$sanitized_testData</p>";
 
         if (filter_var($sanitized_email, FILTER_VALIDATE_EMAIL))
         {
@@ -86,14 +92,6 @@ if (
 		'$sanitized_testData',
 		'$sanitized_email'
             )";
-
-          // connect to DB and execute query
-          // TODO: give better die warnings; maybe do internal error warning
-
-          $mysql_handle = mysql_connect('localhost', 'mark', 'pass')
-            or die('Unable to connect');
-          $db_handle = mysql_select_db('UWNet', $mysql_handle)
-            or die('Unable to select the database');
           $result = mysql_query($query);
           mysql_close($mysql_handle);
 

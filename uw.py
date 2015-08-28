@@ -3,6 +3,7 @@ from time import gmtime, strftime, clock, time	# for timestamping packets
 import time
 import hashlib #for checksum purposes
 import mysql.connector # mysql database
+import getpass
 
 sys.path.append('/usr/lib/python2.7/dist-packages')
 
@@ -80,9 +81,10 @@ if ("MMOKY" not in port_ttyUSB1.readline()):
 
 # Connect to the database.
 
-cnx = mysql.connector.connect(user='mark', password='pass', host='localhost', database='UWNet')
+cnx = mysql.connector.connect(user= getpass.getuser(), password='pass', host='localhost', database='UWNet')
 # TODO: may need to change parameters for mysql.connector.connect() depending on
 # which machine we are using.
+## getpass library extracts information regarding the machine's user name. issue though is with password. Does it have to always be hardwired is there another way?
 
 cursor = cnx.cursor()
 
@@ -129,6 +131,7 @@ for (id, mpwr, lpwr, ppwr, mbkn, lbkn, pbkn, mmod, lmod, pmod, rptt, testData) i
 
     ## print '### Sending in Mode {0}'.format(transmission_mode)
     # TODO: Should this be logged instead of printed?
+    # yes, it should be; that way we can keep track and even use it for plotting purposes.
 
     if transmission_mode == 1:
         bytes_per_block = 38
@@ -185,15 +188,23 @@ for (id, mpwr, lpwr, ppwr, mbkn, lbkn, pbkn, mmod, lmod, pmod, rptt, testData) i
 
               # TODO: enable toggling of send mode: either in command mode, or data mode
               # TODO: implement checksum
+              
+              
 
               # Write hex-encoded data to the write port, /dev/ttyUSB0.
 
-              port_ttyUSB0.write("$HHTXD,0,{0},0,{1}\r\n".format(transmission_mode, packet_to_send.encode("hex")))
-
+              original = port_ttyUSB0.write("$HHTXD,0,{0},0,{1}\r\n".format(transmission_mode, packet_to_send.encode("hex")))
+              #is original then already encoded, or do we have to pass the x-or function prior just in case?
+              o_xor = xor_string_hash(original)
               # Read from the read port, /dev/ttyUSB1.
 
               read_buffer = port_ttyUSB1.readline();
               ## print "read buf: {0}".format(read_buffer)
+              data_transmitted = xor_string_hash(read_buffer)
+              if o_xor == data_transmitted:
+                  print("Correct File Transmission")
+              else:
+                  print("Checksum indicated incorrect transmission.")
 
               # Check if packet was transmitted, then
               # extract the data segment from the $MMRXD command.

@@ -12,6 +12,7 @@ CREATE TABLE InputQueue(
 	mmod INT NOT NULL,
 	lmod INT NOT NULL,
 	pmod INT NOT NULL,
+        rptt INT NOT NULL,
 	testData VARCHAR(1024),
 	email VARCHAR(128),
 	exitStatus INT DEFAULT NULL,

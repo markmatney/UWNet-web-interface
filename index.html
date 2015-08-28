@@ -8,7 +8,7 @@
 		<h1>Underwater Network Experiment</h1>
 		<p>Use this form to send data across our network.<br> 
 		Set the parameters with this form.</p>
-		<form method='post' action='submit.php'>
+		<form enctype='multipart/form-data' method='post' action='submit.php'>
 			<table>
 				<tr>
 					<th>Parameter</th>
@@ -56,10 +56,13 @@
 					<td>number of repetitions</td>
 					<td><input name='rptt' type='text'></td>
 				</tr>
-
 				<tr>
-					<td>testData</td>
-					<td><input name='testData' type='text'></td>
+					<td>file type</td>
+					<td><input name='fileType' type='radio' value='text'>text<br><input name='fileType' type='radio' value='image'>image</td>
+				</tr>
+				<tr>
+					<td>file path</td>
+					<td><input type="hidden" name="MAX_FILE_SIZE" value="2000000"><input name="filePath" type="file"></td>
 				</tr>
 				<tr>
 					<td>email</td>

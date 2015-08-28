@@ -101,7 +101,8 @@ try {
 
     // connect to DB and execute query
     // TODO: give better die warnings; maybe do internal error warning
-    $mysql_handle = mysql_connect('localhost', 'mark', 'pass')
+    $username = getenv('USERNAME') ? : getenv('USER'); //generalizing username.
+    $mysql_handle = mysql_connect('localhost', $username, 'pass')
         or die('Unable to connect');
     $db_handle = mysql_select_db('UWNet', $mysql_handle)
         or die('Unable to select the database');

@@ -81,20 +81,18 @@ try {
 
     // max must be greater than min
     if (!(
-        ($nums['mpwr'] > $nums['lpwr']) &&
-        ($nums['mbkn'] > $nums['lbkn']) &&
-        ($nums['mmod'] > $nums['lmod'])
+        ($nums['mpwr'] >= $nums['lpwr']) &&
+        ($nums['mbkn'] >= $nums['lbkn']) &&
+        ($nums['mmod'] >= $nums['lmod'])
        ))
     {
         throw new RuntimeException('Ensure that for all numerical parameters, max &gt; min');
     }
 
     // step size must evenly divide interval
-    if (!(
-        (($nums['mpwr'] - $nums['lpwr']) % $nums['ppwr'] == 0) &&
-        (($nums['mbkn'] - $nums['lbkn']) % $nums['pbkn'] == 0) &&
-        (($nums['mmod'] - $nums['lmod']) % $nums['pmod'] == 0)
-       ))
+    if (
+        (($nums['mpwr'] != $nums['lpwr']) && (($nums['mpwr'] - $nums['lpwr']) % $nums['ppwr'] != 0)) || (($nums['mbkn'] != $nums['lbkn']) && (($nums['mbkn'] - $nums['lbkn']) % $nums['pbkn'] != 0)) || (($nums['mbkn'] != $nums['lbkn']) && (($nums['mbkn'] - $nums['lbkn']) % $nums['pbkn'] != 0))
+       )
     {
         throw new RuntimeException('Ensure that (max - min) mod step == 0');
     }

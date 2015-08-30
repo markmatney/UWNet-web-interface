@@ -2,48 +2,88 @@ Underwater Net Project Outline
 
 I. Web interface
 
-This is a form that takes input values from the user, sends them to the back end, runs the test suite. The input values:
+This is a form that takes input values from the user, to be used in an
+experiment:
 
   1. transmission power: max, min, step
   2. blocks/packet: max, min, step
   3. transmission mode: max, min, step
-  4. test data: user-supplied file or text
+  4. number of trials (repetitions)
+  5. test data: uploaded file to transfer
 
-1, 2, and 3 will define the range of values to test, and the script will transmit the test data under every possible set of parameters. For example, if for transmission mode the user specifies (max 5, min 1, step 2), for blocks/packet (max 8, min 1, step 7), for transmission power (max 0, min -12, step 6), our test suite would transmit the data with the following parameters:
+Transmission power, blocks/packet, and transmission mode will define the range
+]of values to test, and the script will transmit the test data under every
+possible set of parameters, for the number of repetitions specified.
 
-power	blk/pkt	mode
-0	1	1
--6	1	1
--12	1	1
-0	8	1
--6	8	1
--12	8	1
-0	1	3
--6	1	3
--12	1	3
-0	8	3
--6	8	3
--12	8	3
-0	1	5
--6	1	5
--12	1	5
-0	8	5
--6	8	5
--12	8	5
+For example, if the user submits for transmission mode (max 5, min 1, step 2),
+for blocks/packet (max 8, min 1, step 7), and for transmission power
+(max 0, min -12, step 6), our test suite would transmit the data with the
+following parameters:
 
-There are 3*2*3 = 18 combinations of these parameters
+power	blk/pkt	mode	trial
+0	1	1	0
+-6	1	1	0
+-12	1	1	0
+0	8	1	0
+-6	8	1	0
+-12	8	1	0
+0	1	3	0
+-6	1	3	0
+-12	1	3	0
+0	8	3	0
+-6	8	3	0
+-12	8	3	0
+0	1	5	0
+-6	1	5	0
+-12	1	5	0
+0	8	5	0
+-6	8	5	0
+-12	8	5	0
+0	1	1	1
+-6	1	1	1
+-12	1	1	1
+0	8	1	1
+-6	8	1	1
+-12	8	1	1
+0	1	3	1
+-6	1	3	1
+-12	1	3	1
+0	8	3	1
+-6	8	3	1
+-12	8	3	1
+0	1	5	1
+-6	1	5	1
+-12	1	5	1
+0	8	5	1
+-6	8	5	1
+-12	8	5	1
 
 II. Test script
 
-The test script is a Python file that is adopted from the RUN_CHINFO.SH and SUB_PKT.SH shell scripts. It will receive the queued experiments (rows in the database, from the queue table) from the database when notified that the test apparatus is online, run the test script on the fields of each row, and store results in the database (in the results table). Also will email the results to the user who submitted the test parameters.
+The test script is a Python file that is adopted from the RUN_CHINFO.SH and
+SUB_PKT.SH shell scripts. On a schedule, it will retrieve recently enqueued
+experiments (rows in InputQueue that were submitted since the last batch of
+experiments was run) from the database, run the test script on the fields of
+each row, and store results in the database (Results table).
+
+During each experiment, a logfile is kept with information about the success or
+failure of each packet transmission; whether or not data was mutated or lost
+in transmission; number of bytes transmitted with each packet; current values
+of trial number, transmission power, mode, and blocks/packet.
+
+[!] TODO: report database query errors in logfile
 
 III. Database
 
 [!] TODO: May want to store the numerical parameters in JSON
 
-The database will store the parameters that users submit with the form, and the results of the tests. There are two tables. The queue table will store each form submission. The results table will store the output of the script; whatever results from the experiment need to be measured/analyzed (not yet specified).
+The database will store the parameters that users submit with the form, and the
+results of the tests. There are two tables. The InputQueue table will store
+each form submission. The Results table will store the total delay time, number
+of lost packets, and number of retransmissions made during each transmission of
+the test data.
 
-	1. queue
+	1. InputQueue
 +----+------+------+------+------+------+------+------+------+------+-----/
 | id | mpwr | lpwr | ppwr | mbkn | lbkn | pbkn | mmod | lmod | pmod | ...
 +----+------+------+------+------+------+------+------+------+------+-----/
@@ -62,10 +102,7 @@ mmod/lmod/pmod  max, min, step transmission mode
 
 rptt		number of times to repeat each experiment
 
-testData	file or text string provided to form as input
-
-		[!] TODO: how to store file? Maybe just save to the server, and 
-		then just store its local path in the database
+testData	uploaded file (path on our server)
 
 email		email to send test results to
 
@@ -77,7 +114,7 @@ emailSent	TRUE if results have been sent to the email specified in the
 		queue table, FALSE otherwise 
 
 
-	2. results
+	2. Results
 +--------------+------------+---------+
 | experimentId | parameters | results |
 +--------------+------------+---------+
@@ -87,18 +124,26 @@ experimentId	indicates the id of the row in the queue table that this row
 
 parameters	JSON string representing the input parameters.
 
-		{ pwr: $POWERVALUE,
-		  bkn: $BLOCKSPERPACKET,
-		  mod: $TRANSMISSIONMODE }
+		{ "pwr": $TRANSMISSION_POWER,
+		  "bkn": $BLOCKS_PER_PACKET,
+		  "mod": $TRANSMISSION_MODE }
 
-results		JSON string representing the experimental results.
+results		JSON string representing the experimental results for all trials using
+		a particular parameter combination, keyed by the trial number.
 
-		{ delay:    $DELAYTIME,
-		  lossRate: $LOSS,
-		  retx:     $RETX }
+		{ "0": { "delay": $DELAY_TIME,
+		         "loss":  $PACKET_LOSS_COUNT,
+		         "retx":  $PACKET_RETX_COUNT },
+                  "1": ...
+                }
 
-		bit loss rate (can be derived from block loss rate)
+		[!] TODO: calculate bit loss rate (derived from block loss rate)
 		retx == retransmissions
 
+IV. Publishing Script
 
+In order for users to see the results of their test, we will generate plots of
+the data and other summaries/analysis, and send the results to them via the
+email provided when they submitted the form.
 
+[!] TODO: in progress

@@ -3,6 +3,7 @@ from time import gmtime, strftime, clock, time	# for timestamping packets
 import time
 import hashlib #for checksum purposes
 import mysql.connector # mysql database
+import getpass
 
 sys.path.append('/usr/lib/python2.7/dist-packages')
 
@@ -90,9 +91,10 @@ if ("MMOKY" not in port_ttyUSB1.readline()):
 
 # Connect to the database.
 
-cnx = mysql.connector.connect(user='mark', password='pass', host='localhost', database='UWNet')
+cnx = mysql.connector.connect(user= getpass.getuser(), password='pass', host='localhost', database='UWNet')
 # TODO: may need to change parameters for mysql.connector.connect() depending on
 # which machine we are using.
+## getpass library extracts information regarding the machine's user name. issue though is with password. Does it have to always be hardwired is there another way?
 
 cursor = cnx.cursor()
 cursor_insert = cnx.cursor()
@@ -213,6 +215,8 @@ for id in selected_rows:
 
               # TODO: enable toggling of send mode: either in command mode, or data mode
               # TODO: implement checksum
+              
+              
 
               # Write hex-encoded data to the write port, /dev/ttyUSB0.
               ##print "ascii\n", packet_to_send, "hex\n", packet_to_send.encode("hex")
@@ -233,14 +237,22 @@ for id in selected_rows:
                   
               ##port_ttyUSB0.write("\r\n")
 
+# TODO: fix this please
+              '''
+              o_xor = xor_string_hash(original)
               # Read from the read port, /dev/ttyUSB1.
 
-              read_buffer = port_ttyUSB1.readline();
+              ###read_buffer = port_ttyUSB1.readline();
 
               ##print read_buffer
 
               ## print "read buf: {0}".format(read_buffer)
-
+              data_transmitted = xor_string_hash(read_buffer)
+              if o_xor == data_transmitted:
+                  print("Correct File Transmission")
+              else:
+                  print("Checksum indicated incorrect transmission.")
+              '''
               # Check if packet was transmitted, then
               # extract the data segment from the $MMRXD command.
 

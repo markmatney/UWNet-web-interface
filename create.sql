@@ -1,3 +1,5 @@
+-- TODO: create a standard user for the database
+
 CREATE DATABASE UWNet;
 USE UWNet;
 

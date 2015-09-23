@@ -25,7 +25,13 @@ TODO: add additional form for users to login and view results of submitted jobs
 
 
 
-II. uw.py - the test script
+II. submit.php - form validation
+
+This script validates the form input, sanitizes SQL, etc.
+
+
+
+III. uw.py - the test script
 
 The test script is a Python file that is adopted from the RUN_CHINFO.SH and
 SUB_PKT.SH shell scripts. On a schedule, it will retrieve recently enqueued
@@ -42,7 +48,7 @@ of trial number, transmission power, mode, and blocks/packet.
 
 
 
-III. create.sql - initializes the database
+IV. create.sql - initializes the database
 
 The database (called 'UWNet') will store the parameters that users submit with
 the form, and the results of the tests. There are two tables. The InputQueue
@@ -123,7 +129,7 @@ results		JSON string representing the experimental results for all trials using
 
 
 
-IV. auto_generate_plots.py - data plotting
+V. auto_generate_plots.py - data plotting
 
 [!] TODO: may want to have user accounts instead of emailing results
 

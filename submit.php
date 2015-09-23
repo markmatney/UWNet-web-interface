@@ -1,4 +1,17 @@
+<!-- TODO
+Test this more thoroughly. Check for security! 
+
+Also may want to generate a logon key for users after the form is submitted.
+This could be a random hash value. They should write down this value for later
+use, maybe on our index.html there could be a form to enter the key into which
+takes them to a portal page to see results of their experiments. This would be
+an easy way to have user accounts simply create a login script (python or php)
+that checks a new table in the database (user) for a row with the key in order
+to login. -->
+
 <?php
+
+// TODO: remove the following block comment when ready to deploy code
 /*
 echo "<pre>";
 //echo exec("sudo find / -name {$_FILES['filePath']['tmp_name']}");
@@ -29,6 +42,7 @@ echo "</pre>";
 
 exit();
 */
+
 // all fields expecting a number must have a numeric value
 try {
     if (!(
@@ -91,16 +105,25 @@ try {
 
     // step size must evenly divide interval
     if (
-        (($nums['mpwr'] != $nums['lpwr']) && (($nums['mpwr'] - $nums['lpwr']) % $nums['ppwr'] != 0)) || (($nums['mbkn'] != $nums['lbkn']) && (($nums['mbkn'] - $nums['lbkn']) % $nums['pbkn'] != 0)) || (($nums['mbkn'] != $nums['lbkn']) && (($nums['mbkn'] - $nums['lbkn']) % $nums['pbkn'] != 0))
+        (($nums['mpwr'] != $nums['lpwr']) && 
+        (($nums['mpwr'] - $nums['lpwr']) % $nums['ppwr'] != 0)) ||
+
+        (($nums['mbkn'] != $nums['lbkn']) &&
+        (($nums['mbkn'] - $nums['lbkn']) % $nums['pbkn'] != 0)) ||
+
+        (($nums['mbkn'] != $nums['lbkn']) &&
+        (($nums['mbkn'] - $nums['lbkn']) % $nums['pbkn'] != 0))
        )
     {
         throw new RuntimeException('Ensure that (max - min) mod step == 0');
     }
 
     // connect to DB and execute query
-    // TODO: give better die warnings; maybe do internal error warning
-    $username = getenv('USERNAME') ? : getenv('USER'); //generalizing username.
-    $mysql_handle = mysql_connect('localhost', $username, 'pass')
+    $username = getenv('USERNAME') ? : getenv('USER');
+
+    // TODO: have mysql prompt for login password, change the following line
+    $mysql_handle = mysql_connect('localhost', 'mark', 'pass')
+        // TODO: give better die warnings; maybe do internal error warning
         or die('Unable to connect');
     $db_handle = mysql_select_db('UWNet', $mysql_handle)
         or die('Unable to select the database');
@@ -139,9 +162,11 @@ try {
             throw new RuntimeException('Unknown error with file. contact sysadmin');
     }
 
-    if ($file_info['size'] > 2000000) // TODO: number of bytes to allow for max upload size
+    // TODO: may want to change number of bytes to allow for max upload size
+    // remember to change this in php.ini and index.html also!!
+    if ($file_info['size'] > 2000000)
     {
-        throw new RuntimeException('file too big');
+        throw new RuntimeException('File too big! Please use a file smaller than 50 Kb.');
     }
 
     /*
@@ -162,8 +187,6 @@ try {
 
     $unique_file_name = hash('md5', basename($file_info['name']) . time());
     $uploadfile = '/tmp/' . $unique_file_name;
-
-    echo "<p>$uploadfile</p><br>";
 
     if (!move_uploaded_file($file_info['tmp_name'], $uploadfile))
     {
@@ -198,8 +221,7 @@ try {
         throw new RuntimeException('mysql insert failed');
     }
 
-    echo '<p>Data was inserted correctly!<p>';
-    echo '<p>Results will be sent to the following email address:</p>';
+    echo '<p>Request submitted successfully! Results will be sent to the following email address:</p>';
     echo "<p>$sanitized_email</p>";
     echo '<p>If this is incorrect, please contact us at [admin uwnet]@cs.ucla.edu</p>';
     // TODO: Specify contact email in line above

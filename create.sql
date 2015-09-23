@@ -19,6 +19,7 @@ CREATE TABLE InputQueue(
 	email VARCHAR(128),
 	exitStatus INT DEFAULT NULL,
 	emailSent BOOL DEFAULT FALSE,
+	plotsGenerated BOOL DEFAULT FALSE,
 	PRIMARY KEY(id)
 );
 

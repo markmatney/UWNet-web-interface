@@ -1,6 +1,12 @@
-Underwater Net Project Outline
+WaterCom
 
-I. Web interface
+
+
+This document describes the software components of WaterCom.
+
+
+
+I. index.html - web interface
 
 This is a form that takes input values from the user, to be used in an
 experiment:
@@ -12,53 +18,14 @@ experiment:
   5. test data: uploaded file to transfer
 
 Transmission power, blocks/packet, and transmission mode will define the range
-]of values to test, and the script will transmit the test data under every
+of values to test, and the script will transmit the test data under every
 possible set of parameters, for the number of repetitions specified.
 
-For example, if the user submits for transmission mode (max 5, min 1, step 2),
-for blocks/packet (max 8, min 1, step 7), and for transmission power
-(max 0, min -12, step 6), our test suite would transmit the data with the
-following parameters:
+TODO: add additional form for users to login and view results of submitted jobs
 
-power	blk/pkt	mode	trial
-0	1	1	0
--6	1	1	0
--12	1	1	0
-0	8	1	0
--6	8	1	0
--12	8	1	0
-0	1	3	0
--6	1	3	0
--12	1	3	0
-0	8	3	0
--6	8	3	0
--12	8	3	0
-0	1	5	0
--6	1	5	0
--12	1	5	0
-0	8	5	0
--6	8	5	0
--12	8	5	0
-0	1	1	1
--6	1	1	1
--12	1	1	1
-0	8	1	1
--6	8	1	1
--12	8	1	1
-0	1	3	1
--6	1	3	1
--12	1	3	1
-0	8	3	1
--6	8	3	1
--12	8	3	1
-0	1	5	1
--6	1	5	1
--12	1	5	1
-0	8	5	1
--6	8	5	1
--12	8	5	1
 
-II. Test script
+
+II. uw.py - the test script
 
 The test script is a Python file that is adopted from the RUN_CHINFO.SH and
 SUB_PKT.SH shell scripts. On a schedule, it will retrieve recently enqueued
@@ -73,24 +40,25 @@ of trial number, transmission power, mode, and blocks/packet.
 
 [!] TODO: report database query errors in logfile
 
-III. Database
 
-[!] TODO: May want to store the numerical parameters in JSON
 
-The database will store the parameters that users submit with the form, and the
-results of the tests. There are two tables. The InputQueue table will store
-each form submission. The Results table will store the total delay time, number
-of lost packets, and number of retransmissions made during each transmission of
-the test data.
+III. create.sql - initializes the database
+
+The database (called 'UWNet') will store the parameters that users submit with
+the form, and the results of the tests. There are two tables. The InputQueue
+table will store each form submission. The Results table will store the total
+delay time, number of lost packets, and number of retransmissions made during
+each transmission of the test data.
+
 
 	1. InputQueue
 +----+------+------+------+------+------+------+------+------+------+-----/
 | id | mpwr | lpwr | ppwr | mbkn | lbkn | pbkn | mmod | lmod | pmod | ...
 +----+------+------+------+------+------+------+------+------+------+-----/
 
-	  /-----+------+----------+-------+------------+-----------+
-	    ... | rptt | testData | email | exitStatus | emailSent |
-	  /-----+------+----------+-------+------------+-----------+
+/-----+------+----------+-------+------------+-----------+----------------+
+  ... | rptt | testData | email | exitStatus | emailSent | plotsGenerated |
+/-----+------+----------+-------+------------+-----------+----------------+
 
 id		each row has unique
 
@@ -102,16 +70,29 @@ mmod/lmod/pmod  max, min, step transmission mode
 
 rptt		number of times to repeat each experiment
 
+		[!] TODO: May want to store the previous ten numerical
+		parameters in JSON
+
 testData	uploaded file (path on our server)
 
 email		email to send test results to
 
-exitStatus	the exit status of the test script, e.g. if it ran each experiment correctly
+exitStatus	the exit status of the test script, e.g. if it ran each
+		experiment correctly
 
-		[!] TODO: specify status codes
+		[!] TODO: specify exit status codes
 
 emailSent	TRUE if results have been sent to the email specified in the 
 		queue table, FALSE otherwise 
+
+plotsGenerated	TRUE if the plots for this experiment have been generated,
+		FALSE otherwise
+
+		[!] TODO: this will change if/when interactive plot page comes
+
+[!] TODO: add to the database these columns:
+	- dateSubmitted: datetime var for form submission date/time
+	- dateCompleted: datetime for experiment completion date/time
 
 
 	2. Results
@@ -119,8 +100,8 @@ emailSent	TRUE if results have been sent to the email specified in the
 | experimentId | parameters | results |
 +--------------+------------+---------+
 
-experimentId	indicates the id of the row in the queue table that this row
-		is the result of.
+experimentId	Foreign key for id in InputQueue, there will be a row for each
+		combination of parameters, for each trial.
 
 parameters	JSON string representing the input parameters.
 
@@ -140,10 +121,16 @@ results		JSON string representing the experimental results for all trials using
 		[!] TODO: calculate bit loss rate (derived from block loss rate)
 		retx == retransmissions
 
-IV. Publishing Script
+
+
+IV. auto_generate_plots.py - data plotting
+
+[!] TODO: may want to have user accounts instead of emailing results
 
 In order for users to see the results of their test, we will generate plots of
 the data and other summaries/analysis, and send the results to them via the
 email provided when they submitted the form.
 
-[!] TODO: in progress
+
+
+[!] TODO: add section for interactive user portal

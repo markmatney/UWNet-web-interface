@@ -1,142 +1,311 @@
 WaterCom
 
+********************************************************************************
+	0 - Contents
+********************************************************************************
 
+1 - COMPONENTS: the files that make up this system
 
-This document describes the software components of WaterCom.
+	I.	index.html
+	II.	submit.php
+	III.	uw.py
+	IV.	create.sql
+	V.	auto_generate_plots.py
 
+2 - SETUP: instructions for setup on Ubuntu 14.04
 
+3 - TODO: to-do list
+
+	I.	Bugs
+	II.	Features
+
+********************************************************************************
+	1 - COMPONENTS
+********************************************************************************
 
 I. index.html - web interface
 
-This is a form that takes input values from the user, to be used in an
-experiment:
+	This is a form that takes input values from the user, to be used in an
+	experiment:
 
-  1. transmission power: max, min, step
-  2. blocks/packet: max, min, step
-  3. transmission mode: max, min, step
-  4. number of trials (repetitions)
-  5. test data: uploaded file to transfer
+	1. transmission power: max, min, step
+	2. blocks/packet: max, min, step
+	3. transmission mode: max, min, step
+	4. number of trials (repetitions)
+	5. test data: local file to transfer
+	6. email address of user
 
-Transmission power, blocks/packet, and transmission mode will define the range
-of values to test, and the script will transmit the test data under every
-possible set of parameters, for the number of repetitions specified.
+	Transmission power, blocks/packet, and transmission mode will define the range
+	of values to test, and the script will transmit the test data under every
+	possible set of parameters, for the number of repetitions specified. Test data
+	is a user-specified local file that is uploaded to our server.
 
-TODO: add additional form for users to login and view results of submitted jobs
+	[!] TODO: implement sending of results via email back to users
 
+	[!] TODO: may want to have user accounts or portals, instead of emailing
+	results. A simple way to do this would be to give users a key when they submit
+	a job, and have a form on index.html where they can enter this key to see
+	results of their experiments.
 
+	[!] TODO: add CSS/Javascript for nicer user interface
 
-II. submit.php - form validation
+II. submit.php - form validation and job enqueueing
 
-This script validates the form input, sanitizes SQL, etc.
+	This script validates the form input, sanitizes SQL, and submits a job to the 
+	input queue on the server.
 
+	[!] TODO:	$ cat -n submit.php | grep TODO
 
+III. uw.py - the main test script
 
-III. uw.py - the test script
+	The test script is a Python file that is adopted from the RUN_CHINFO.SH and
+	SUB_PKT.SH shell scripts. On a schedule, it will retrieve recently enqueued
+	experiments (rows in InputQueue that were submitted since the last batch of
+	experiments was run) from the database, run the test script on the fields of
+	each row, and store results in the database (Results table).
 
-The test script is a Python file that is adopted from the RUN_CHINFO.SH and
-SUB_PKT.SH shell scripts. On a schedule, it will retrieve recently enqueued
-experiments (rows in InputQueue that were submitted since the last batch of
-experiments was run) from the database, run the test script on the fields of
-each row, and store results in the database (Results table).
+	During each experiment, a logfile is kept with information about the success or
+	failure of each packet transmission; whether or not data was mutated or lost
+	in transmission; number of bytes transmitted with each packet; current values
+	of trial number, transmission power, mode, and blocks/packet.
 
-During each experiment, a logfile is kept with information about the success or
-failure of each packet transmission; whether or not data was mutated or lost
-in transmission; number of bytes transmitted with each packet; current values
-of trial number, transmission power, mode, and blocks/packet.
-
-[!] TODO: report database query errors in logfile
-
-
-
-IV. create.sql - initializes the database
-
-The database (called 'UWNet') will store the parameters that users submit with
-the form, and the results of the tests. There are two tables. The InputQueue
-table will store each form submission. The Results table will store the total
-delay time, number of lost packets, and number of retransmissions made during
-each transmission of the test data.
+	[!] TODO:	$ cat -n uw.py | grep TODO
 
 
-	1. InputQueue
-+----+------+------+------+------+------+------+------+------+------+-----/
-| id | mpwr | lpwr | ppwr | mbkn | lbkn | pbkn | mmod | lmod | pmod | ...
-+----+------+------+------+------+------+------+------+------+------+-----/
-
-/-----+------+----------+-------+------------+-----------+----------------+
-  ... | rptt | testData | email | exitStatus | emailSent | plotsGenerated |
-/-----+------+----------+-------+------------+-----------+----------------+
-
-id		each row has unique
-
-mpwr/lpwr/ppwr	max, min, step power
-
-mbkn/lbkn/pbkn  max, min, step blocks per packet
-
-mmod/lmod/pmod  max, min, step transmission mode
-
-rptt		number of times to repeat each experiment
-
-		[!] TODO: May want to store the previous ten numerical
-		parameters in JSON
-
-testData	uploaded file (path on our server)
-
-email		email to send test results to
-
-exitStatus	the exit status of the test script, e.g. if it ran each
-		experiment correctly
-
-		[!] TODO: specify exit status codes
-
-emailSent	TRUE if results have been sent to the email specified in the 
-		queue table, FALSE otherwise 
-
-plotsGenerated	TRUE if the plots for this experiment have been generated,
-		FALSE otherwise
-
-		[!] TODO: this will change if/when interactive plot page comes
-
-[!] TODO: add to the database these columns:
-	- dateSubmitted: datetime var for form submission date/time
-	- dateCompleted: datetime for experiment completion date/time
+IV. create.sql - initialize the database
 
 
-	2. Results
-+--------------+------------+---------+
-| experimentId | parameters | results |
-+--------------+------------+---------+
+	The database (called 'UWNet') will store the parameters that users submit with
+	the form, and the results of the tests. There are two tables. The InputQueue
+	table will store each form submission. The Results table will store the total
+	delay time, number of lost packets, and number of retransmissions made during
+	each transmission of the test data.
 
-experimentId	Foreign key for id in InputQueue, there will be a row for each
-		combination of parameters, for each trial.
+	a. InputQueue
 
-parameters	JSON string representing the input parameters.
+	+----+------+------+------+------+------+------+------+------+------+-----/
+	| id | mpwr | lpwr | ppwr | mbkn | lbkn | pbkn | mmod | lmod | pmod | ...
+	+----+------+------+------+------+------+------+------+------+------+-----/
 
-		{ "pwr": $TRANSMISSION_POWER,
-		  "bkn": $BLOCKS_PER_PACKET,
-		  "mod": $TRANSMISSION_MODE }
+	/-----+------+----------+-------+---------------+------------+-----/
+	  ... | rptt | testData | email | dateSubmitted | exitStatus | ...
+	/-----+------+----------+-------+---------------+------------+-----/
 
-results		JSON string representing the experimental results for all trials using
-		a particular parameter combination, keyed by the trial number.
+	/-----+---------------+-----------+----------------+
+	  ... | dateCompleted | emailSent | plotsGenerated |
+	/-----+---------------+-----------+----------------+
 
-		{ "0": { "delay": $DELAY_TIME,
-		         "loss":  $PACKET_LOSS_COUNT,
-		         "retx":  $PACKET_RETX_COUNT },
-                  "1": ...
-                }
+	id		primary key
 
-		[!] TODO: calculate bit loss rate (derived from block loss rate)
-		retx == retransmissions
+	mpwr/lpwr/ppwr	max, min, step power
 
+	mbkn/lbkn/pbkn  max, min, step blocks per packet
+
+	mmod/lmod/pmod  max, min, step transmission mode
+
+	rptt		number of times to repeat each experiment
+
+			[!] TODO: May want to store the previous ten numerical
+			parameters in JSON
+
+	testData	uploaded file (path on our server)
+
+	email		email to send test results to
+
+	dateSubmitted	date and time of form submission
+
+	exitStatus	the exit status of the test script, e.g. if it ran each
+			experiment correctly
+
+			[!] TODO: specify exit status codes in uw.py
+
+	dateCompleted	date and time of experiment completion
+
+	emailSent	TRUE if results have been sent to the email specified in the 
+			queue table, FALSE otherwise 
+
+	plotsGenerated	TRUE if the plots for this experiment have been generated,
+			FALSE otherwise
+
+			[!] TODO: may no longer need plotsGenerated if/when interactive
+			user portal comes
+
+
+		b. Results
+
+	+--------------+------------+---------+
+	| experimentId | parameters | results |
+	+--------------+------------+---------+
+
+	experimentId	foreign key for id in InputQueue, there will be a row for each
+			combination of parameters, for each trial
+
+	parameters	JSON string representing the input parameters
+
+			{ "pwr": $TRANSMISSION_POWER,
+			  "bkn": $BLOCKS_PER_PACKET,
+			  "mod": $TRANSMISSION_MODE }
+
+	results		JSON string representing the experimental results for all trials
+			using a particular parameter combination, keyed by the trial
+			number.
+
+			{ "0": { "delay": $DELAY_TIME,
+			         "loss":  $PACKET_LOSS_COUNT,
+			         "retx":  $PACKET_RETX_COUNT },
+	                  "1": ...
+	                }
+
+			[!] TODO: calculate bit loss rate (derived from block loss rate)
+			retx == retransmissions
 
 
 V. auto_generate_plots.py - data plotting
 
-[!] TODO: may want to have user accounts instead of emailing results
 
-In order for users to see the results of their test, we will generate plots of
-the data and other summaries/analysis, and send the results to them via the
-email provided when they submitted the form.
+	In order for users to see the results of their test, we will generate plots of 
+	the data and other summaries/analysis, and send the results to them via the 
+	email provided when they submitted the form.
+
+	Currently, the script checks the database to see which experiments have not 
+	been plotted already, generates wireframe plots for them, and saves images of 
+	the plots in the 'plots' folder.
+
+	It is important to note that this only works when the web form is submitted as 
+	follows:
+
+	        mpwr == lpwr
+	        ppwr == { any positive integer }
+	        mmod == 5
+	        lmod == 1
+	        pmod == 1
+	        mbkn == 16
+	        lbkn == 1
+	        pbkn == 1
+	
+	The next maintainer(s) must fix this plotting script to plot arbitrary data 
+	sets.
 
 
+********************************************************************************
+	2 - SETUP
+********************************************************************************
 
-[!] TODO: add section for interactive user portal
+
+WaterCom Setup Guide for Ubuntu 14.04 (other OSes may require some tweaks)
+
+1. Ensure that your machine has the following software packages installed:
+
+	Apache/2.4.7
+	mysql Ver 14.14 Distrib 5.5.44, 
+	PHP 5.5.9-1ubuntu4.11 (cli) 
+	Python 2.7.6
+	pip 7.1.2 (Python package manager)
+
+...and these Python modules:
+
+	matplotlib
+	mpl_toolkits.mplot3d
+	mysql.connector
+	numpy
+	pylab
+	scipy
+	serial
+
+2. Move the folder 'UWNet-web-interface' inside the public web folder; on
+Ubuntu, this is '/var/www/html'. Then:
+
+	$ cd /var/www/html/UWNet-web-interface
+
+3. Create the MySQL database with:
+
+	$ mysql -u [username] -h [localhost] -p[pass] < create.sql
+
+4. To access the form, point a web browser to 'localhost/UWNet-web-interface'.
+Enter the values requested and choose a file to upload.
+
+5. With the AquaSeNT modems powered on, connect them to your machine via USB.
+To run the submitted experiments:
+
+	$ python uw.py
+
+6. To plot results:
+
+	$ python auto_generate_plots.py
+
+[!] NOTE: CREATING WIREFRAME PLOTS IS ONLY POSSIBLE WHEN THE FORM IS SUBMITTED
+WITH VALUES:
+
+	mpwr == lpwr
+	ppwr == { any positive integer }
+	mmod == 5
+	lmod == 1
+	pmod == 1
+	mbkn == 16
+	lbkn == 1
+	pbkn == 1
+	rptt == 1
+
+THE MAINTAINER OF THIS CODE NEEDS TO FIX auto_generate_plots.py !!!
+
+********************************************************************************
+	3 - TODO
+********************************************************************************
+
+I. Bugs
+
+In each file I have noted any TODOs that should be done. To find these:
+
+	$ cat -n [FILE] | grep TODO
+
+Otherwise, here are known problems:
+
+	1. The plotting script auto_generate_plots.py only generates correct
+	wireframe plots when the form is submitted with certain values; i.e.:
+
+	mpwr == lpwr
+	ppwr == { any positive integer }
+	mmod == 5
+	lmod == 1
+	pmod == 1
+	mbkn == 16
+	lbkn == 1
+	pbkn == 1
+	rptt == 1
+
+	It is not known if it will succeed with any other values, and needs to
+	be thoroughly tested. The maintainer(s) will have to fix the plotting
+	script by removing hard-coded values, and figure out how to do wireframe
+	plotting the correct way. Generating scatter plots is easier, and the
+	code exists in the script already (commented out).
+
+	2. The main test script does not do error reporting very well. There
+	should be an error code system that reports to the database if anything
+	went wrong during the execution of an experiment (e.g. database
+	connection error). Need to decide what is worth reporting. Make sure
+	this comes up in the error logs too!
+
+	3. This guide does not address hosting on a live server. It has only
+	been hosted locally so far.
+
+II. Features
+
+Here are some ideas for where to go from here:
+
+	1. Decide how to deliver results to user. Can either have user accounts
+	which they setup on the main page, or can give them a key upon form
+	submission, which they can use to log on and view results for that
+	experiment. Or, can simply generate plot files and email to them.
+
+	2. Setup job scheduling for the python scripts. This is simple:
+
+		$ man crontab
+
+	3. Add CSS styling and/or JavaScript to build a nicer or easier-to-use
+	front-end.
+
+	4. Improve user experience. Maybe want to do form validation on the
+	front-end in additioon to back-end, or fill the form with default values 
+	initially. Give better feedback when user enters invalid form data
+	(change submit.php).
+

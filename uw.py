@@ -11,61 +11,44 @@ sys.path.append('/usr/lib/python2.7/dist-packages')
 ### Auxiliary functions
 ################################################################################
 
-# TODO: do we even need this function? might as well keep it for now
-# check number of args (arity check)
-# check argument format
-# ensure datetime is 10 digits
-# ensure power is in [-127,0]
-# ensure txmode is in [1,5]
-# based on value of txmode, check that pktlen is correct
-# ensure pktnum is in [0,9999]
-# just do this error checking before passing it to the backend???
-
-# Returns string representing the packet containing a timestamp, power level,
-# transmission mode, packet length, and id number.
-def subpkt(rtc, pwr, mod, plt, psn):
-  data = ''.join(random.choice(string.ascii_uppercase) for i in range(plt - 38))
-  return 'PTD{0}PRW{1}TMD{2}PLT{3}PSN{4}@{5}'.format(str(rtc), str(pwr).zfill(3), str(mod), str(plt).zfill(4), str(psn).zfill(4), data)
-
-
-# Returns the hex value of the xor of all characters in a string.
+### Returns the hex value of the xor of all characters in a string.
 def xor_string_hash(string):
   ret = 0
   for char in string:
     ret ^= ord(char)
-  return hex(ret)[2:] # return everything but the first two characters, "0x"
+  return hex(ret)[2:] ### return everything but the first two characters, "0x"
 
-# Formats numbers with suffix e.g.: ord(1) -> "1st", ord(2) -> "2nd"
+### Formats numbers with suffix e.g.: ord(1) -> "1st", ord(2) -> "2nd"
 def ord(n):
     return str(n)+("th" if 4<=n%100<=20 else {1:"st",2:"nd",3:"rd"}.get(n%10, "th"))
 
 ################################################################################
-### 0. TODO: Logfile Setup
+### 0. Logfile Setup
 ################################################################################
 
-# TODO: may want to remove logging when debugging is complete, or allow it to be toggled
-logfile_name = '../logs/UWNet-{0}.LOG'.format(strftime("20%y-%m-%d--%H:%M:%S", localtime()))
+### TODO: may want to remove logging when debugging is complete, or allow it to be toggled
+logfile_name = 'logs/UWNet-{0}.LOG'.format(strftime("20%y-%m-%d--%H:%M:%S", localtime()))
 logfile = open(logfile_name, 'w')
 
 ################################################################################
 ### 1. Port configuration
 ################################################################################
 
-# Setup the port to be read from ( /dev/ttyUSB0 ) with timeout to enable
-# recovery from packet loss.
+### Setup the port to be read from ( /dev/ttyUSB0 ) with timeout to enable
+### recovery from packet loss.
 
 port_ttyUSB0 = serial.Serial(port='/dev/ttyUSB0', baudrate=38400)
 port_ttyUSB1 = serial.Serial(port='/dev/ttyUSB1', baudrate=38400, timeout=50)
 
-# For each port, enter command mode (+++A) and enable checksum ($HHCRW,MMCHK,1),
-# then check for success.
+### For each port, enter command mode (+++A) and enable checksum ($HHCRW,MMCHK,1),
+### then check for success.
 
 port_ttyUSB0.write("+++A\r\n")
 if ("MMOKY" not in port_ttyUSB0.readline()):
   logfile.write('CRITICAL ERROR: cannot enter command mode for ttyUSB0 ... exiting')
-  exit(0) # TODO: do something better upon failure, maybe try to fix!
+  exit(0) ### TODO: do something better upon failure, maybe try to fix!
 
-                               # TODO: set to 1 if want checksum
+### TODO: set MMCHK to 1 if want checksum
 '''
 port_ttyUSB0.write("$HHCRW,MMCHK,0\r\n")
 if ("MMOKY" not in port_ttyUSB0.readline()):
@@ -89,36 +72,38 @@ if ("MMOKY" not in port_ttyUSB1.readline()):
 ### 2. Retrieve experiments
 ################################################################################
 
-# Resources:
-#   http://dev.mysql.com/doc/refman/5.5/en/index.html
-#   https://docs.python.org/2/howto/webservers.html?highlight=mysql
-#   http://dev.mysql.com/doc/connector-python/en/connector-python-example-cursor-select.html
+### Resources:
+###   http://dev.mysql.com/doc/refman/5.5/en/index.html
+###   https://docs.python.org/2/howto/webservers.html?highlight=mysql
+###   http://dev.mysql.com/doc/connector-python/en/connector-python-example-cursor-select.html
 
-# Connect to the database.
+### Connect to the database.
 
 cnx = mysql.connector.connect(user= getpass.getuser(), password='pass', host='localhost', database='UWNet')
 
-# TODO: may need to change parameters for mysql.connector.connect() depending on
-# TODO: create a standard user for the database; include script in create.sql
-# which machine we are using.
-## getpass library extracts information regarding the machine's user name. issue though is with password. Does it have to always be hardwired is there another way?
+### TODO: may need to change parameters for mysql.connector.connect() depending on
+### which machine we are using.
+
+### TODO: create a standard user for the database; include script in create.sql
+
+### getpass library extracts information regarding the machine's user name. issue though is with password. Does it have to always be hardwired is there another way?
 
 cursor = cnx.cursor()
 cursor_insert = cnx.cursor()
 
-# Retrieve rows from InputQueue table for experiments which have not been run
+### Retrieve rows from InputQueue table for experiments which have not been run
 
 retrieve_experiments = ("SELECT id, mpwr, lpwr, ppwr, mbkn, lbkn, pbkn, mmod, lmod, pmod, rptt, testData FROM InputQueue WHERE exitStatus IS NULL")
 cursor.execute(retrieve_experiments)
 
-# Store each row in a dictionary.
+### Store each row in a dictionary.
 
 selected_rows = {}
 for (id, mpwr, lpwr, ppwr, mbkn, lbkn, pbkn, mmod, lmod, pmod, rptt, testData) in cursor:
   selected_rows[id] = { 'mpwr': mpwr, 'lpwr': lpwr, 'ppwr': ppwr, 'mbkn': mbkn, 'lbkn': lbkn, 'pbkn': pbkn, 'mmod': mmod, 'lmod': lmod, 'pmod': pmod, 'rptt': rptt, 'testData': testData }
 
-# Collect results from each trial in this dictionary for insertion into Results
-# table. The keys correspond to the 'id' column in the InputQueue table. 
+### Collect results from each trial in this dictionary for insertion into Results
+### table. The keys correspond to the 'id' column in the InputQueue table. 
 
 allResults = {}
 
@@ -126,15 +111,16 @@ allResults = {}
 ### 3. Run each experiment on each combination of { pwr, bkn, mod }, rptt times
 ################################################################################
 
-# handle each enqueued experiment
-# report errors, store in database
-# code NULL: exited normally
-# code NOT NULL: error
-#  - KE: kermit configuration
-#  - DB: database access
-#  - PT: port configuration
-#  - etc...
-# TODO: Devise error code scheme
+### handle each enqueued experiment
+
+### TODO: report errors, store in database
+### code NULL: exited normally
+### code NOT NULL: error
+###  - KE: kermit configuration
+###  - DB: database access
+###  - PT: port configuration
+###  - etc...
+### TODO: Devise error code scheme, or decide that it is unnecessary...
 
 for id in selected_rows:
 
@@ -143,8 +129,8 @@ for id in selected_rows:
   logfile.write('===== STARTING EXPERIMENT {0} =====\n\n'.format(id))
   print '===== STARTING EXPERIMENT {0} =====\n'.format(id)
 
-  # Each element of the following list will be its own row in Results.
-  # All elements in this list will have the same experimentID.
+  ### Each element of the following list will be its own row in Results.
+  ### All elements in this list will have the same experimentID.
   resultsList = []
 
   for transmission_mode in range(row['lmod'], row['mmod'] + 1, row['pmod']):
@@ -183,30 +169,31 @@ for id in selected_rows:
         logfile.write('-> TXPWR := transmission_power\n\n')
         print '-> TXPWR := transmission_power\n'
 
-        # Collect data for each trial in a dictionary, keyed by trial number.
+        ### Collect data for each trial in a dictionary, keyed by trial number.
 
         collectionOfTrials = {}
 
-        for trial in range(row['rptt']): # repeat the experiment!
+        for trial in range(row['rptt']): ### repeat the experiment!
 
           logfile.write('\tTrial {0}\n\n'.format(trial))
           print '\tTrial {0}\n'.format(trial)
 
-          # Keep track of packet loss, retransmissions, and execution time.
+          ### Keep track of packet loss, retransmissions, and execution time.
 
           n_loss = 0
           n_retx = 0
           start_time = time.time() 
 
-          # Transmit file across network.
+          ### Transmit file across network.
           
-          # Get file handle for the filepath indicated by testData
+          ### Get file handle for the filepath indicated by testData
 
           with open(str(row['testData']), 'r') as read_file:
 
             packet_to_send = read_file.read(packet_length)
             packet_counter = 0
 
+            # while there is still data to send
             while '' != packet_to_send:
 
               packet_to_send_hex = packet_to_send.encode("hex")
@@ -216,13 +203,13 @@ for id in selected_rows:
               logfile.write('\tSending packet {0}{1} ({2} bytes) ... '.format(packet_counter, ord(packet_counter), len(packet_to_send)))
               print '\tSending packet {0}{1} ({2} bytes) ... '.format(packet_counter, ord(packet_counter), len(packet_to_send))
 
-              # TODO: enable toggling of send mode: either in command mode, or data mode
+              ### TODO: enable toggling of send mode: either in command mode, or data mode
               
-              # Write hex-encoded data to the write port, /dev/ttyUSB0.
+              ### Write hex-encoded data to the write port, /dev/ttyUSB0.
 
               max_len = 2500
 
-              # TODO: see if we can use packet_to_send instead:
+              ### TODO: see if we can use packet_to_send instead:
               if len(packet_to_send_hex) <= max_len:
                 port_ttyUSB0.write("$HHTXD,0,{0},0,{1}\r\n".format(transmission_mode, packet_to_send_hex))
               else:
@@ -234,30 +221,32 @@ for id in selected_rows:
                   offset += max_len
                 port_ttyUSB0.write("$HHTXD,0,{0},0,{1}\r\n".format(transmission_mode, packet_to_send_hex[offset:]))
                   
-              # Check if packet was transmitted, then
-              # extract the data segment from the $MMRXD command.
+              ### Check if packet was transmitted, then
+              ### extract the data segment from the $MMRXD command.
+
+              read_buffer = port_ttyUSB1.readline()
 
 	      if len(read_buffer) == 0: # TODO: replace with timeout check
                 n_loss += 1
                 logfile.write("packet lost\n")
                 print "\t\tpacket lost"
               else:
-                read_data = ''
 
-################ Refactor the following code block
-################ * Change the two sequential if statements to one nested in another
+                ### will hold the data extracted from the read buffer
+                read_data = ''
 
                 if "$MMRXA," in read_buffer:
 
-                  # 11 to shave off "$MMRXD,#,0,", -2 to account for \r\n
+                  ### if receive data in ASCII format, no need to call string.decode("hex")
+                  ### 11 to shave off "$MMRXD,#,0,", -2 to account for \r\n
 
                   read_data = read_buffer[11:len(read_buffer)-2]
                   logfile.write("{0} bytes transferred successfully\n".format(len(read_data)))
                   print "\t\t{0} bytes transferred successfully".format(len(read_data))
 
-                  # Uncomment the following code block to use checksums
-                  # * Unnecessary at this point since the process running this script
-                  # * still has access to the data via program variables!
+                  ### Uncomment the following code block to use checksums
+                  ### * Unnecessary at this point since the process running this script
+                  ### * still has access to the data via program variables!
 
                   '''
                   checksum_sent = xor_string_hash(packet_to_send)
@@ -269,20 +258,21 @@ for id in selected_rows:
                   '''
 
                   if (read_data != packet_to_send):
-                    logfile.write("\t\tCorruption detected!\n"
+                    logfile.write("\t\tCorruption detected!\n")
                     print "\t\t*** Corruption detected!"
 
                 elif "$MMRXD," in read_buffer:
 
-                  # 11 to shave off "$MMRXD,#,0,", -2 to account for \r\n
+                  ### if receive data in HEX format, call string.decode("hex")
+                  ### 11 to shave off "$MMRXD,#,0,", -2 to account for \r\n
 
                   read_data = read_buffer[11:len(read_buffer)-2].decode("hex")
                   logfile.write("{0} bytes transferred\n".format(len(read_data)))
                   print "\t\t{0} bytes transferred".format(len(read_data))
 
-                  # Uncomment the following code block to use checksums
-                  # * Unnecessary at this point since the process running this script
-                  # * still has access to the data via program variables!
+                  ### Uncomment the following code block to use checksums
+                  ### * Unnecessary at this point since the process running this script
+                  ### * still has access to the data via program variables!
 
                   '''
                   checksum_sent = xor_string_hash(packet_to_send)
@@ -304,31 +294,26 @@ for id in selected_rows:
 
               packet_to_send = read_file.read(packet_length)
 
-          # Report execution time, and add it with the other results to the list.
+          ### Report execution time, and add it with the other results to the list.
 
           file_transmission_time = time.time() - start_time
           collectionOfTrials[trial] = { "delay": file_transmission_time, "loss": n_loss, "retx": n_retx }
           logfile.write("\n\tdelay:\t{0} seconds\n\tloss:\t{1}\n\tretx:\t{2}\n".format(file_transmission_time, n_loss, n_retx))
           print "\n\tdelay:\t{0} seconds\n\tloss:\t{1}\n\tretx:\t{2}".format(file_transmission_time, n_loss, n_retx)
 
-        # Insert row into DB
+        ### Insert row into DB
 
         add_row = ('INSERT INTO Results VALUES({0}, \'{1}\', \'{2}\')'.format(id, json.dumps({ "pwr": transmission_power, "bkn": blocks_per_packet, "mod": transmission_mode }), json.dumps(collectionOfTrials)))
         cursor.execute(add_row)
         cnx.commit()
 
-        '''
-        # Add the trial collection to resultsList.
-
-        resultsList.append( { 'parameters': { 'pwr': transmission_power, 'bkn': blocks_per_packet, 'mod': transmission_mode }, 'results': collectionOfTrials } )
-        '''
-
         logfile.write('\n')
         print '\n'
 
-  # Update exitStatus in InputQueue.
+  ### Update exitStatus in InputQueue.
+  ### TODO: change this from hard-coded exit status to variable
 
-  update_exitStatus = ('UPDATE InputQueue SET exitStatus = 0 WHERE id = {0}'.format(id))
+  update_exitStatus = ('UPDATE InputQueue SET exitStatus = 0, dateCompleted = \'{0}\' WHERE id = {1}'.format(time.strftime('%Y-%m-%d %H:%M:%S'), id))
   cursor.execute(update_exitStatus)
   cnx.commit()
 
@@ -336,16 +321,11 @@ for id in selected_rows:
   logfile.write("Experiment {0} done!\n\n".format(id))
 
 ################################################################################
-### 4. Handle results
+### 4. Cleanup
 ################################################################################
-
-# TODO: CORRECTLY record exit status, which will determine if we need to rerun the experiments, require manual intervention, or are ready to be emailed to client
 
 cursor.close()
 cnx.close()
-
-# Be sure to close the logfile!
-
 logfile.close()
 
 exit(0)

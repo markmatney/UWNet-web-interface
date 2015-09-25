@@ -43,8 +43,11 @@ echo "</pre>";
 exit();
 */
 
-// all fields expecting a number must have a numeric value
+// TODO: change
+$contact_email = 'uwnetadmin@cs.ucla.edu';
+
 try {
+    // all fields expecting a number must have a numeric value
     if (!(
         is_numeric($_POST['mpwr']) &&
         is_numeric($_POST['lpwr']) &&
@@ -76,21 +79,21 @@ try {
     'rptt' => $_POST['rptt'] + 0
     );
 
-    // all numeric values must be integers
+    // all numeric values must be positive integers
     if (!(
-        is_int($nums['mpwr']) &&
-        is_int($nums['lpwr']) &&
-        is_int($nums['ppwr']) &&
-        is_int($nums['mbkn']) &&
-        is_int($nums['lbkn']) &&
-        is_int($nums['pbkn']) &&
-        is_int($nums['mmod']) &&
-        is_int($nums['lmod']) &&
-        is_int($nums['pmod']) &&
+        is_int($nums['mpwr']) && $nums['mpwr'] > 0 &&
+        is_int($nums['lpwr']) && $nums['lpwr'] > 0 &&
+        is_int($nums['ppwr']) && $nums['ppwr'] > 0 &&
+        is_int($nums['mbkn']) && $nums['mbkn'] > 0 &&
+        is_int($nums['lbkn']) && $nums['lbkn'] > 0 &&
+        is_int($nums['pbkn']) && $nums['pbkn'] > 0 &&
+        is_int($nums['mmod']) && $nums['mmod'] > 0 &&
+        is_int($nums['lmod']) && $nums['lmod'] > 0 &&
+        is_int($nums['pmod']) && $nums['pmod'] > 0 &&
         is_int($nums['rptt']) && $nums['rptt'] > 0
        ))
     {
-        throw new RuntimeException('Ensure that all numerical parameters are integers');
+        throw new RuntimeException('Ensure that all numerical parameters are positive integers');
     }
 
     // max must be greater than min
@@ -100,7 +103,7 @@ try {
         ($nums['mmod'] >= $nums['lmod'])
        ))
     {
-        throw new RuntimeException('Ensure that for all numerical parameters, max &gt; min');
+        throw new RuntimeException('Ensure that for all numerical parameters, max &gt;= min');
     }
 
     // step size must evenly divide interval
@@ -111,11 +114,11 @@ try {
         (($nums['mbkn'] != $nums['lbkn']) &&
         (($nums['mbkn'] - $nums['lbkn']) % $nums['pbkn'] != 0)) ||
 
-        (($nums['mbkn'] != $nums['lbkn']) &&
-        (($nums['mbkn'] - $nums['lbkn']) % $nums['pbkn'] != 0))
+        (($nums['mmod'] != $nums['lmod']) &&
+        (($nums['mmod'] - $nums['lmod']) % $nums['pmod'] != 0))
        )
     {
-        throw new RuntimeException('Ensure that (max - min) mod step == 0');
+        throw new RuntimeException('Ensure that (max - min) mod step == 0, or that max == min');
     }
 
     // connect to DB and execute query
@@ -123,8 +126,8 @@ try {
 
     // TODO: have mysql prompt for login password, change the following line
     $mysql_handle = mysql_connect('localhost', 'mark', 'pass')
-        // TODO: give better die warnings; maybe do internal error warning
         or die('Unable to connect');
+        // TODO: give better die warnings; maybe do internal error warning
     $db_handle = mysql_select_db('UWNet', $mysql_handle)
         or die('Unable to select the database');
 
@@ -159,14 +162,14 @@ try {
         case UPLOAD_ERR_FORM_SIZE:
             throw new RuntimeException('File size error');
         default:
-            throw new RuntimeException('Unknown error with file. contact sysadmin');
+            throw new RuntimeException("Unknown error with file. Contact sysadmin at $contact_email.");
     }
 
     // TODO: may want to change number of bytes to allow for max upload size
     // remember to change this in php.ini and index.html also!!
-    if ($file_info['size'] > 2000000)
+    if ($file_info["size"] > 2000000)
     {
-        throw new RuntimeException('File too big! Please use a file smaller than 50 Kb.');
+        throw new RuntimeException('File too big! Please use a file smaller than 2 Mb.');
     }
 
     /*
@@ -192,6 +195,7 @@ try {
     {
         throw new RuntimeException('file could not be uploaded');
     }
+    $date_submitted = date('Y-m-d H:i:s');
 
     // construct query
     $query = 
@@ -202,7 +206,8 @@ try {
     mmod,	lmod,	pmod,
     rptt,
     testData,
-    email
+    email,
+    dateSubmitted
     )
     VALUES
     (
@@ -211,7 +216,8 @@ try {
     {$nums['mmod']},	{$nums['lmod']},	{$nums['pmod']},
     {$nums['rptt']},
     '$uploadfile',
-    '$sanitized_email'
+    '$sanitized_email',
+    '$date_submitted'
     )";
     $result = mysql_query($query);
     mysql_close($mysql_handle);
@@ -223,7 +229,7 @@ try {
 
     echo '<p>Request submitted successfully! Results will be sent to the following email address:</p>';
     echo "<p>$sanitized_email</p>";
-    echo '<p>If this is incorrect, please contact us at [admin uwnet]@cs.ucla.edu</p>';
+    echo "<p>If this is incorrect, please contact us at $contact_email</p>";
     // TODO: Specify contact email in line above
 }
 catch (RuntimeException $e)

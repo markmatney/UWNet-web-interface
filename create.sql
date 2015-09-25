@@ -17,7 +17,9 @@ CREATE TABLE InputQueue(
         rptt INT NOT NULL,
 	testData VARCHAR(1024),
 	email VARCHAR(128),
+	dateSubmitted DATETIME NOT NULL,
 	exitStatus INT DEFAULT NULL,
+	dateCompleted DATETIME DEFAULT NULL,
 	emailSent BOOL DEFAULT FALSE,
 	plotsGenerated BOOL DEFAULT FALSE,
 	PRIMARY KEY(id)

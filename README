@@ -35,39 +35,42 @@ I. index.html - web interface
 	5. test data: local file to transfer
 	6. email address of user
 
-	Transmission power, blocks/packet, and transmission mode will define the range
-	of values to test, and the script will transmit the test data under every
-	possible set of parameters, for the number of repetitions specified. Test data
-	is a user-specified local file that is uploaded to our server.
+	Transmission power, blocks/packet, and transmission mode will define the
+	range of values to test, and the script will transmit the test data
+	under every possible set of parameters, for the number of repetitions
+	specified. Test data is a user-specified local file that is uploaded to
+	our server.
 
 	[!] TODO: implement sending of results via email back to users
 
 	[!] TODO: may want to have user accounts or portals, instead of emailing
-	results. A simple way to do this would be to give users a key when they submit
-	a job, and have a form on index.html where they can enter this key to see
-	results of their experiments.
+	results. A simple way to do this would be to give users a key when they
+	submit a job, and have a form on index.html where they can enter this
+	key to see results of their experiments.
 
 	[!] TODO: add CSS/Javascript for nicer user interface
 
 II. submit.php - form validation and job enqueueing
 
-	This script validates the form input, sanitizes SQL, and submits a job to the 
-	input queue on the server.
+	This script validates the form input, sanitizes SQL, and submits a job
+	to the input queue on the server.
 
 	[!] TODO:	$ cat -n submit.php | grep TODO
 
 III. uw.py - the main test script
 
-	The test script is a Python file that is adopted from the RUN_CHINFO.SH and
-	SUB_PKT.SH shell scripts. On a schedule, it will retrieve recently enqueued
-	experiments (rows in InputQueue that were submitted since the last batch of
-	experiments was run) from the database, run the test script on the fields of
-	each row, and store results in the database (Results table).
+	The test script is a Python file that is adopted from the RUN_CHINFO.SH
+	and SUB_PKT.SH shell scripts. On a schedule, it will retrieve recently
+	enqueued experiments (rows in InputQueue that were submitted since the
+	last batch of experiments was run) from the database, run the test
+	script on the fields of each row, and store results in the database
+	(Results table).
 
-	During each experiment, a logfile is kept with information about the success or
-	failure of each packet transmission; whether or not data was mutated or lost
-	in transmission; number of bytes transmitted with each packet; current values
-	of trial number, transmission power, mode, and blocks/packet.
+	During each experiment, a logfile is kept with information about the
+	success or failure of each packet transmission; whether or not data was
+	mutated or lost in transmission; number of bytes transmitted with each
+	packet; current values of trial number, transmission power, mode, and
+	blocks/packet.
 
 	[!] TODO:	$ cat -n uw.py | grep TODO
 
@@ -75,25 +78,26 @@ III. uw.py - the main test script
 IV. create.sql - initialize the database
 
 
-	The database (called 'UWNet') will store the parameters that users submit with
-	the form, and the results of the tests. There are two tables. The InputQueue
-	table will store each form submission. The Results table will store the total
-	delay time, number of lost packets, and number of retransmissions made during
-	each transmission of the test data.
+	The database (called 'UWNet') will store the parameters that users
+	submit with the form, and the results of the tests. There are two
+	tables. The InputQueue table will store each form submission. The
+	Results table will store the total delay time, number of lost packets,
+	and number of retransmissions made during each transmission of the test
+	data.
 
 	a. InputQueue
 
-	+----+------+------+------+------+------+------+------+------+------+-----/
-	| id | mpwr | lpwr | ppwr | mbkn | lbkn | pbkn | mmod | lmod | pmod | ...
-	+----+------+------+------+------+------+------+------+------+------+-----/
+	+----+------+------+------+------+------+------+------+------+------+--/
+	| id | mpwr | lpwr | ppwr | mbkn | lbkn | pbkn | mmod | lmod | pmod |  
+	+----+------+------+------+------+------+------+------+------+------+--/
 
-	/-----+------+----------+-------+---------------+------------+-----/
-	  ... | rptt | testData | email | dateSubmitted | exitStatus | ...
-	/-----+------+----------+-------+---------------+------------+-----/
+	/--+------+----------+-------+---------------+------------+--/
+	   | rptt | testData | email | dateSubmitted | exitStatus |
+	/--+------+----------+-------+---------------+------------+--/
 
-	/-----+---------------+-----------+----------------+
-	  ... | dateCompleted | emailSent | plotsGenerated |
-	/-----+---------------+-----------+----------------+
+	/--+---------------+-----------+----------------+
+	   | dateCompleted | emailSent | plotsGenerated |
+	/--+---------------+-----------+----------------+
 
 	id		primary key
 
@@ -121,14 +125,14 @@ IV. create.sql - initialize the database
 
 	dateCompleted	date and time of experiment completion
 
-	emailSent	TRUE if results have been sent to the email specified in the 
-			queue table, FALSE otherwise 
+	emailSent	TRUE if results have been sent to the email specified in
+			the queue table, FALSE otherwise 
 
-	plotsGenerated	TRUE if the plots for this experiment have been generated,
-			FALSE otherwise
+	plotsGenerated	TRUE if the plots for this experiment have been
+			generated, FALSE otherwise
 
-			[!] TODO: may no longer need plotsGenerated if/when interactive
-			user portal comes
+			[!] TODO: may no longer need plotsGenerated if/when
+			interactive user portal comes
 
 
 		b. Results
@@ -137,8 +141,8 @@ IV. create.sql - initialize the database
 	| experimentId | parameters | results |
 	+--------------+------------+---------+
 
-	experimentId	foreign key for id in InputQueue, there will be a row for each
-			combination of parameters, for each trial
+	experimentId	foreign key for id in InputQueue, there will be a row
+			for each combination of parameters, for each trial
 
 	parameters	JSON string representing the input parameters
 
@@ -146,9 +150,9 @@ IV. create.sql - initialize the database
 			  "bkn": $BLOCKS_PER_PACKET,
 			  "mod": $TRANSMISSION_MODE }
 
-	results		JSON string representing the experimental results for all trials
-			using a particular parameter combination, keyed by the trial
-			number.
+	results		JSON string representing the experimental results for
+			all trials using a particular parameter combination,
+			keyed by the trial number.
 
 			{ "0": { "delay": $DELAY_TIME,
 			         "loss":  $PACKET_LOSS_COUNT,
@@ -156,23 +160,23 @@ IV. create.sql - initialize the database
 	                  "1": ...
 	                }
 
-			[!] TODO: calculate bit loss rate (derived from block loss rate)
-			retx == retransmissions
+			[!] TODO: calculate bit loss rate (derived from block
+			loss rate)
 
 
 V. auto_generate_plots.py - data plotting
 
 
-	In order for users to see the results of their test, we will generate plots of 
-	the data and other summaries/analysis, and send the results to them via the 
-	email provided when they submitted the form.
+	In order for users to see the results of their test, we will generate
+	plots of the data and other summaries/analysis, and send the results to
+	them via the email provided when they submitted the form.
 
-	Currently, the script checks the database to see which experiments have not 
-	been plotted already, generates wireframe plots for them, and saves images of 
-	the plots in the 'plots' folder.
+	Currently, the script checks the database to see which experiments have
+	not been plotted already, generates wireframe plots for them, and saves
+	images of the plots in the 'plots' folder.
 
-	It is important to note that this only works when the web form is submitted as 
-	follows:
+	It is important to note that this only works when the web form is
+	submitted as follows:
 
 	        mpwr == lpwr
 	        ppwr == { any positive integer }
@@ -183,8 +187,8 @@ V. auto_generate_plots.py - data plotting
 	        lbkn == 1
 	        pbkn == 1
 	
-	The next maintainer(s) must fix this plotting script to plot arbitrary data 
-	sets.
+	The next maintainer(s) must fix this plotting script to plot arbitrary
+	data sets.
 
 
 ********************************************************************************
